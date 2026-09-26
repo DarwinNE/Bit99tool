@@ -16,6 +16,11 @@ enum sysex_state {IDLE, SYSEX_START, SYSEX_MODEL, SYSEX_TYPE,
 unsigned char bitmap_p[MAX_DUMP_SIZE];
 int dump_pointer=0;
 unsigned char program_number;
+unsigned char bitmap_size;
+
+#define BITMAP_74 74
+#define BITMAP_14 14
+
 char file_name[PATH_MAX];
 
 
@@ -216,8 +221,10 @@ void bit99_process_byte(int ch)
                 gui_printf("Bitmap detected (size=%d)\n", dump_pointer);
                 if(dump_pointer==74) {
                     bit99_decode_program_bitmap();
+                    bitmap_size=BITMAP_74;
                 } else if(dump_pointer==14) {
                     bit99_decode_split_double_bitmap();
+                    bitmap_size=BITMAP_14;
                 } else {
                     fprintf(stderr, "Size of the bit map does not correspond"
                         " to any known case (program or split/double).\n");
@@ -240,6 +247,7 @@ void bit99_process_byte(int ch)
 int bit99_sysex(char *fname)
 {
     gui_printf("Processing file: %s\n", fname);
+    bitmap_size = 0;
 
     FILE *fin = fopen(fname, "rb");
     if(fin == NULL) {
@@ -255,7 +263,14 @@ int bit99_sysex(char *fname)
 
     fclose(fin);
 
-    sysex_editor_open_bitmap(bitmap_p, dump_pointer, fname);
+    if(bitmap_size==BITMAP_74)
+        sysex_editor_open_bitmap74(bitmap_p, dump_pointer, fname);
+    else if(bitmap_size==BITMAP_14) {
+        gui_printf("Not yet available!\n");
+    } else {
+        gui_printf("The file does not contain a program.\n");
+    }
+        
     return 0;
 }
 

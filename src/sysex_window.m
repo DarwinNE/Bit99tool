@@ -1324,7 +1324,7 @@ double adjustY(int idx)
 
 @end
 
-void sysex_editor_open_bitmap(const unsigned char *bitmap,
+void sysex_editor_open_bitmap74(const unsigned char *bitmap,
                               int size,
                               const char *filename)
 {
