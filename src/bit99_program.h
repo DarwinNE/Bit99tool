@@ -6,7 +6,7 @@
 
 /* The number of parameters shown is higher than the number of entries in the
    bitmap, as a single entry can yield more than an interface element. */
-#define BIT99_PROGRAM_PARAMETERS_74 37
+#define BIT99_PROGRAM_PARAMETERS_74 37+2
 #define BIT99_PROGRAM_BITMAP_SIZE_74 (2 * BIT99_PROGRAM_PARAMETERS_74)
 #define BIT99_SHOWN_PARAMETERS_SIZE_74 46
 

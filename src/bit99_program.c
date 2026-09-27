@@ -30,13 +30,12 @@ bit_map p_bit_desc14[BIT99_PROGRAM_PARAMETERS_14] = {
 /* 2*/ { 0, "Mode", NOTE7, 0, 0, 0, 0},
 /* 3*/ { 64, "Split point key", 1, 0, 0, 0, 0},
 /* 3*/ { 65, "Upper transpose key", 1, 0, 0, 0, 0},
-/* 5*/ { 65, "Lower volume", 1, 0, 0, 0, 0},
-/* 6*/ { 65, "Upper volume", 1, 0, 0, 0, 0},
+/* 5*/ { 66, "Lower volume", 4, 0, 0, 0, 0},
+/* 6*/ { 67, "Upper volume", 4, 0, 0, 0, 0},
 };
 
 int order14[BIT99_SHOWN_PARAMETERS_SIZE_14]=
     {0, 1, 2, 3, 4, 5, 6};
-
 
 bit_map p_bit_desc74[BIT99_PROGRAM_PARAMETERS_74] = {
 /* 0*/ {12, "Wheel amount", 4, 0, 0, 0, 0},
@@ -112,12 +111,12 @@ void bit99_process_byte(int ch)
             if(ch==0xF0) state=SYSEX_START;
             break;
         case EOX:
-            if(ch!=0xF7) fprintf(stderr, "The SYSEX EOX is missing.\n");
+            if(ch!=0xF7) gui_printf( "The SYSEX EOX is missing.\n");
             state=IDLE;
             break;
         case SYSEX_START:
             if(ch!=0x25) {
-                fprintf(stderr, "Error: Sysex ID is not 0x25 (Crumar BIT)\n");
+                gui_printf( "Error: Sysex ID is not 0x25 (Crumar BIT)\n");
                 state=IDLE;
             } else {
                 state=SYSEX_MODEL;
@@ -130,7 +129,7 @@ void bit99_process_byte(int ch)
             } else if((ch&0x70)==0x10) {
                 gui_printf("Sysex for Crumar BIT 01");
             } else {
-                fprintf(stderr, "Warning: unknown model ID: 0x%x.\n",
+                gui_printf( "Warning: unknown model ID: 0x%x.\n",
                     (int)ch&0x70);
             }
             gui_printf(", channel=%d\n", channel);
@@ -166,7 +165,7 @@ void bit99_process_byte(int ch)
                     state=REQUEST_P_DUMP;
                     break;
                 default:
-                    fprintf(stderr, "Unknown SYSEX type byte 0x%x\n", (int)ch);
+                    gui_printf( "Unknown SYSEX type byte 0x%x\n", (int)ch);
                     state=IDLE;
             }
             break;
@@ -231,7 +230,7 @@ void bit99_process_byte(int ch)
                     bit99_decode_split_double_bitmap();
                     bitmap_size=BITMAP_14;
                 } else {
-                    fprintf(stderr, "Size of the bit map does not correspond"
+                    gui_printf("Size of the bit map does not correspond"
                         " to any known case (program or split/double).\n");
                 }
                 break;
@@ -239,11 +238,11 @@ void bit99_process_byte(int ch)
             if(dump_pointer<MAX_DUMP_SIZE)
                 bitmap_p[dump_pointer++]=(unsigned char)ch;
             else
-                fprintf(stderr,
+                gui_printf(
                     "Error: bitmap larger than %d bytes\n",MAX_DUMP_SIZE);
             break;
         default:
-            fprintf(stderr, "Wrong state!\n");
+            gui_printf("Wrong state!\n");
             state=IDLE;
             break;
     }
@@ -254,9 +253,10 @@ int bit99_sysex(char *fname)
     gui_printf("Processing file: %s\n", fname);
     bitmap_size = 0;
 
+
     FILE *fin = fopen(fname, "rb");
     if(fin == NULL) {
-        fprintf(stderr, "Can not open file.\n");
+        gui_printf( "Can not open file.\n");
         return 1;
     }
     strncpy(file_name, fname, sizeof(file_name));
@@ -269,6 +269,7 @@ int bit99_sysex(char *fname)
     fclose(fin);
 
     if(bitmap_size==BITMAP_74) {
+        gui_printf("Open a 74-byte bitmap.\n");
         sysex_editor_open_bitmap(bitmap_p, dump_pointer,
             p_bit_desc74, order74, BIT99_SHOWN_PARAMETERS_SIZE_74, fname);
     } else if(bitmap_size==BITMAP_14) {
@@ -406,6 +407,9 @@ bit99_decode_parameter(const bit_map *p_bit_desc,
         result->value = data;
         break;
 
+    case NOTE7:
+        result->value = data;
+        break;
 
     /*
      * Normal numerical parameter.
@@ -414,8 +418,7 @@ bit99_decode_parameter(const bit_map *p_bit_desc,
         if (p_bit_desc[index].step_size <= 0)
             return -1;
 
-        result->value =
-            data / p_bit_desc[index].step_size;
+        result->value = data/p_bit_desc[index].step_size;
         break;
     }
 
@@ -441,7 +444,6 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
     }
 
     switch (p_bit_desc[index].step_size) {
-
         /*
          * Detune.
          *
@@ -452,7 +454,6 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
         case NOTE1:
             data = 0x80 + 2 * value->value;
             break;
-
 
         /*
          * DCO octave/frequency.
@@ -467,14 +468,12 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
             data = value->octave * 12 + value->frequency;
             break;
 
-
         /*
          * LFO control flags.
          */
         case NOTE3:
             data = value->value;
             break;
-
 
         /*
          * LFO waveforms and VCF inversion.
@@ -505,15 +504,19 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
                 data |= 0x02;
 
             break;
+        case NOTE7:
+            data = value->value;
+            break;
 
 
         /*
          * Normal numerical parameter.
          */
         default:
-            gui_printf("default\n");
-            if (p_bit_desc[index].step_size <= 0)
+            if (p_bit_desc[index].step_size <= 0) {
+                gui_printf("Programming error: check!\n");
                 return -1;
+            }
 
             data = value->value * p_bit_desc[index].step_size;
             break;
@@ -569,7 +572,6 @@ void bit99_decode_program_bitmap74(void)
     int k;
     int i;
     Bit99ParameterValue value;
-
     gui_printf_bold(
         "**************************************************************\n");
     gui_printf_bold(
@@ -669,6 +671,13 @@ void bit99_decode_program_bitmap74(void)
         "**************************************************************\n");
 }
 
+/**
+    Save the current bitmap.
+    The size of the bitmap depends on the program number
+     1-75 -> 74 bytes ordinary program
+    76-99 -> 14 bytes Split/Double bitmap
+
+*/
 int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program)
 {
     unsigned char data[] = {
@@ -685,11 +694,14 @@ int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program)
     data[4] = program-1;
 
     fwrite(data, 1, 5, fout);
-    fwrite(bitmap, 1, 74, fout);
+    if(program<76)
+        fwrite(bitmap, 1, 74, fout);
+    else
+        fwrite(bitmap, 1, 14, fout);
 
     unsigned char endsysx[] = {
-        0xF7,   // Sysex start
-        0xF7,   // Manifacturer ID (Crumar)
+        0xF7,   // Sysex end
+        0xF7,   // Sysex end
     };
 
     fwrite(endsysx, 1, 2, fout);

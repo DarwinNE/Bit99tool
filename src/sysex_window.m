@@ -38,20 +38,23 @@ static char parameterInfoKey;
 
 static void setupDSEG7Popup(NSPopUpButton *popup)
 {
-    //CGFloat size = [[popup font] pointSize];
 
-    /*NSFont *font = [NSFont fontWithName:@"DSEG7 Classic" size:size];
+    CGFloat size = [[popup font] pointSize];
+
+    //NSFont *font = [NSFont fontWithName:@"DSEG7 Classic" size:size];
     NSColor *color = [NSColor redColor];
+    NSColor *back = [NSColor blackColor];
 
-    [popup setFont:font];
+    //[popup setFont:font];
 
     // Testo visualizzato nel popup chiuso
     NSAttributedString *title =
         [[NSAttributedString alloc]
             initWithString:[popup title]
                 attributes:@{
-                    NSFontAttributeName: font,
-                    NSForegroundColorAttributeName: color
+                    //NSFontAttributeName: font,
+                    //NSForegroundColorAttributeName: color,
+                    //NSBackgroundColorAttributeName: back
                 }];
 
     [[popup cell] setAttributedTitle:title];
@@ -62,10 +65,10 @@ static void setupDSEG7Popup(NSPopUpButton *popup)
             [[NSAttributedString alloc]
                 initWithString:[item title]
                     attributes:@{
-                        NSFontAttributeName: font,
-                        NSForegroundColorAttributeName: color
+                        //NSFontAttributeName: font,
+                        //NSForegroundColorAttributeName: color
                     }]];
-    }*/
+    }
 }
 
 static void setupDSEG7Field(NSTextField *field)
@@ -392,7 +395,6 @@ static void parameterChanged(id sender)
         return;
     }
 
-
     /*
      * Normal numerical parameter or detune.
      */
@@ -416,18 +418,15 @@ static void parameterChanged(id sender)
      * The popup contains the notes.
      */
     if (document->p_bit_desc[index].step_size == NOTE2) {
-
         int freq = (int)[sender indexOfSelectedItem];
 
         value.frequency = freq % 12;
-        gui_printf("parameterChanged: frequency = %d\n", value.frequency);
 
         if (bit99_encode_parameter(document->p_bit_desc,
                             document->bitmap, index, &value) == 0)
         {
             document->modified = YES;
         }
-
         return;
     }
 
@@ -453,6 +452,30 @@ static void parameterChanged(id sender)
         {
             document->modified = YES;
         }
+        return;
+    }
+
+    /*
+     * Split mode
+     */
+    if (document->p_bit_desc[index].step_size == NOTE7) {
+        index = [info[@"index"] intValue];
+        int mode = (int)[sender indexOfSelectedItem];
+
+        Bit99ParameterValue value;
+
+        bit99_decode_parameter(document->p_bit_desc,
+                        document->bitmap, index, &value);
+        
+        value.value = mode+1;
+
+        if (bit99_encode_parameter(document->p_bit_desc,
+                                document->bitmap, index, &value) == 0)
+        {
+            document->modified = YES;
+        }
+        gui_printf("parameter (mode) change: %d\n",value.value);
+
         return;
     }
 }
@@ -540,8 +563,7 @@ double adjustY(int idx)
         adsrViews = [[NSMutableArray alloc] init];
 
         CGFloat totalwidth = 2*COLUMN_WIDTH;
-        CGFloat y =
-            frame.size.height - TOP_MARGIN - ROW_HEIGHT;
+        CGFloat y = frame.size.height - TOP_MARGIN - ROW_HEIGHT;
 
         NSTextField *fileNameLabel =
             createLabel(@"File name:",
@@ -650,14 +672,17 @@ double adjustY(int idx)
         [self addSubview:separator_p];
 
         y -= ROW_HEIGHT;
-        /*gui_printf("Number of elements = %d\n", document->number_of_elements);
+        
+        /*
+        gui_printf("Number of elements = %d\n", document->number_of_elements);
         
         for (unsigned int k = 0; k < document->number_of_elements; ++k) {
             int i = document->order[k];
-            gui_printf("%d ",i);
+            gui_printf("(k=%d, i=%d) ",k,i);
         }
         gui_printf("\n");
-        return 0;*/
+        return 0;
+        */
 
         for (unsigned int k = 0; k < document->number_of_elements; ++k) {
             int i = document->order[k];
@@ -974,8 +999,7 @@ double adjustY(int idx)
                     setParameterInfo(popup, info);
 
                     [popup setTarget:self];
-                    [popup setAction:
-                        @selector(parameterChanged:)];
+                    [popup setAction:@selector(parameterChanged:)];
 
                     [self addSubview:popup];
                     [controls addObject:popup];
@@ -1087,7 +1111,6 @@ double adjustY(int idx)
                         [controls addObject:check];
                     }
                 }
-
                 y -= 2 * ROW_HEIGHT;
             }
 
@@ -1113,6 +1136,44 @@ double adjustY(int idx)
                         0, y+ROW_HEIGHT/2, COLUMN_WIDTH, 1)];
                 [separator setBoxType:NSBoxSeparator];
                 [self addSubview:separator];
+            }
+            /*
+             * Slit/double selector
+             */
+            else if (document->p_bit_desc[i].step_size == NOTE7)  {
+                Bit99ParameterValue value;
+    
+                bit99_decode_parameter(document->p_bit_desc,
+                                    document->bitmap, i, &value);
+                NSPopUpButton *popup =
+                    [[NSPopUpButton alloc]
+                        initWithFrame:
+                            NSMakeRect(calcX(k)+
+                                LEFT_MARGIN + LABEL_WIDTH + PADDING,
+                                y,
+                                CONTROL_WIDTH,
+                                22)];
+    
+                setupDSEG7Popup(popup);
+                [popup addItemWithTitle: @"Split"];
+                setupDSEG7Popup(popup);
+                [popup addItemWithTitle: @"Double"];
+    
+                NSDictionary *info = @{
+                    @"document":
+                        [NSValue valueWithPointer:(
+                            __bridge const void *)document],
+                    @"index": @(i)
+                };
+                setParameterInfo(popup, info);
+                gui_printf("Split/double %d\n", value.value);
+                [popup selectItemAtIndex:value.value-1];
+                
+                
+                [popup setTarget:self];
+                [popup setAction:@selector(parameterChanged:)];
+                [self addSubview:popup];
+                [controls addObject:popup];
             }
 
             y -= ROW_HEIGHT;
