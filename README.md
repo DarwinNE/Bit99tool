@@ -20,6 +20,7 @@ The project is written in **C and Objective-C** using native macOS Cocoa and Cor
 ## Screenshots
 
 ![Program editor](screenshots/screenshot_6.png)
+![Program editor](screenshots/screenshot_8.png)
 
 ## Requirements
 
@@ -76,8 +77,6 @@ Please refer to `LICENSE_dseg7` for the font's licensing terms.
 
 ```text
 .
-├── bit99.c
-├── bit99.h
 ├── Info.plist
 ├── Makefile
 ├── res/
