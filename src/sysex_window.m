@@ -12,8 +12,6 @@
 
 #include "gui.h"
 
-extern bit_map p_bit_desc[];
-extern char order[];
 extern char *octave[];
 extern char *lfo_wave[];
 extern char *key[];
@@ -36,10 +34,7 @@ extern char file_name[PATH_MAX];
 
 #define NROW 21
 
-
 static char parameterInfoKey;
-
-
 
 static void setupDSEG7Popup(NSPopUpButton *popup)
 {
@@ -116,10 +111,14 @@ static void setupDSEG7Field(NSTextField *field)
 @interface SysexDocument : NSObject
 {
 @public
-    unsigned char bitmap[MAX_DUMP_SIZE];
-    int size;
-    BOOL modified;
-    NSString *filename;
+    unsigned char bitmap[MAX_DUMP_SIZE];    // Pointer to the bitmap.
+    int size;                       // Size in bytes of the bitmap.
+    bit_map *p_bit_desc;            // P. to the description of parameters.
+    unsigned int *order;            // P. to the order vector.
+    unsigned int number_of_elements;// No of elements in the two previous arrays
+                                    // i.e. number of shown interface elements.
+    BOOL modified;                  // Flag: has it been modified or not.
+    NSString *filename;             // Current filename.
 }
 @end
 
@@ -179,19 +178,23 @@ static void setupDSEG7Field(NSTextField *field)
     CGFloat release=0;
 
     if(_document!=NULL) {
-        bit99_decode_parameter(_document->bitmap,
+        bit99_decode_parameter(_document->p_bit_desc,
+                        _document->bitmap,
                         _param1,
                         &data);
         attack = data.value;
-        bit99_decode_parameter(_document->bitmap,
+        bit99_decode_parameter(_document->p_bit_desc,
+                        _document->bitmap,
                         _param2,
                         &data);
         decay = data.value;
-        bit99_decode_parameter(_document->bitmap,
+        bit99_decode_parameter(_document->p_bit_desc,
+                        _document->bitmap,
                         _param3,
                         &data);
         sustain = data.value;
-        bit99_decode_parameter(_document->bitmap,
+        bit99_decode_parameter(_document->p_bit_desc,
+                        _document->bitmap,
                         _param4,
                         &data);
         release = data.value;
@@ -299,8 +302,7 @@ static SysexEditorWindowController *editorController = nil;
  * ------------------------------------------------------------------------
  */
 
-static NSTextField *
-createLabel(NSString *text, NSRect frame)
+static NSTextField *createLabel(NSString *text, NSRect frame)
 {
     NSTextField *label =
         [[NSTextField alloc] initWithFrame:frame];
@@ -344,11 +346,11 @@ static void octaveChanged(id sender)
     int index = [info[@"index"] intValue];
     Bit99ParameterValue value;
 
-
-    if (bit99_decode_parameter(document->bitmap, index, &value) != 0)
+    if (bit99_decode_parameter(document->p_bit_desc,
+                            document->bitmap, index, &value) != 0)
+    {
         return;
-
-
+    }
 
     int valuep = [sender intValue];
 
@@ -357,9 +359,11 @@ static void octaveChanged(id sender)
     value.octave = octave;
     gui_printf("octave: %d\n",octave);
 
-    if (bit99_encode_parameter(document->bitmap, index, &value) == 0)
+    if (bit99_encode_parameter(document->p_bit_desc,
+                            document->bitmap, index, &value) == 0)
+    {
         document->modified = YES;
-
+    }
 }
 
 static void parameterChanged(id sender)
@@ -382,22 +386,27 @@ static void parameterChanged(id sender)
 
     [sender setIntValue:valuep];
 
-    if (bit99_decode_parameter(document->bitmap, index, &value) != 0)
+    if (bit99_decode_parameter(document->p_bit_desc,
+                            document->bitmap, index, &value) != 0)
+    {
         return;
+    }
 
 
     /*
      * Normal numerical parameter or detune.
      */
-    if (p_bit_desc[index].step_size > 0 ||
-        p_bit_desc[index].step_size == NOTE1)
+    if (document->p_bit_desc[index].step_size > 0 ||
+        document->p_bit_desc[index].step_size == NOTE1)
     {
 
         value.value = [sender intValue];
 
-        if (bit99_encode_parameter(document->bitmap, index, &value) == 0)
+        if (bit99_encode_parameter(document->p_bit_desc,
+                            document->bitmap, index, &value) == 0)
+        {
             document->modified = YES;
-
+        }
         return;
     }
 
@@ -406,15 +415,18 @@ static void parameterChanged(id sender)
      *
      * The popup contains the notes.
      */
-    if (p_bit_desc[index].step_size == NOTE2) {
+    if (document->p_bit_desc[index].step_size == NOTE2) {
 
         int freq = (int)[sender indexOfSelectedItem];
 
         value.frequency = freq % 12;
         gui_printf("parameterChanged: frequency = %d\n", value.frequency);
 
-        if (bit99_encode_parameter(document->bitmap, index, &value) == 0)
+        if (bit99_encode_parameter(document->p_bit_desc,
+                            document->bitmap, index, &value) == 0)
+        {
             document->modified = YES;
+        }
 
         return;
     }
@@ -422,21 +434,25 @@ static void parameterChanged(id sender)
     /*
      * Note 3 in the manual, LFO flag byte 1.
      */
-    if (p_bit_desc[index].step_size == NOTE3) {
+    if (document->p_bit_desc[index].step_size == NOTE3) {
         index = [info[@"index"] intValue];
         int bit   = [info[@"bit"] intValue];
 
         Bit99ParameterValue value;
 
-        bit99_decode_parameter(document->bitmap, index, &value);
+        bit99_decode_parameter(document->p_bit_desc,
+                        document->bitmap, index, &value);
 
         if ([sender state] == NSControlStateValueOn)
             value.value |= (1 << bit);
         else
             value.value &= ~(1 << bit);
 
-        if (bit99_encode_parameter(document->bitmap, index, &value) == 0)
+        if (bit99_encode_parameter(document->p_bit_desc,
+                                document->bitmap, index, &value) == 0)
+        {
             document->modified = YES;
+        }
         return;
     }
 }
@@ -634,10 +650,17 @@ double adjustY(int idx)
         [self addSubview:separator_p];
 
         y -= ROW_HEIGHT;
+        /*gui_printf("Number of elements = %d\n", document->number_of_elements);
+        
+        for (unsigned int k = 0; k < document->number_of_elements; ++k) {
+            int i = document->order[k];
+            gui_printf("%d ",i);
+        }
+        gui_printf("\n");
+        return 0;*/
 
-        for (int k = 0; k < BIT99_SHOWN_PARAMETERS_SIZE; ++k) {
-
-            int i = order[k];
+        for (unsigned int k = 0; k < document->number_of_elements; ++k) {
+            int i = document->order[k];
             y += adjustY(k);
 
             if(i<0) {
@@ -652,7 +675,7 @@ double adjustY(int idx)
 
             NSString *description =
                 [NSString stringWithUTF8String:
-                    p_bit_desc[i].description];
+                    document->p_bit_desc[i].description];
 
 
             /*
@@ -670,12 +693,12 @@ double adjustY(int idx)
             /*
              * Parameter number.
              */
-            if (p_bit_desc[i].parameter > 0) {
+            if (document->p_bit_desc[i].parameter > 0) {
                 NSTextField *number =
                     createLabel(
                         [NSString stringWithFormat:
                             @"%d",
-                            p_bit_desc[i].parameter],
+                            document->p_bit_desc[i].parameter],
                         NSMakeRect(calcX(k)+LEFT_MARGIN,
                                    y,
                                    PARAM_WIDTH,
@@ -690,14 +713,13 @@ double adjustY(int idx)
             /*
              * Normal numerical parameter, or detune.
              */
-            if (p_bit_desc[i].step_size > 0 ||
-                p_bit_desc[i].step_size == NOTE1) {
+            if (document->p_bit_desc[i].step_size > 0 ||
+                document->p_bit_desc[i].step_size == NOTE1) {
 
                 Bit99ParameterValue value;
 
-                bit99_decode_parameter(document->bitmap,
-                                       i,
-                                       &value);
+                bit99_decode_parameter(document->p_bit_desc,
+                                document->bitmap, i, &value);
 
                 Bit99TextField *field =
                     [[Bit99TextField alloc]
@@ -737,12 +759,11 @@ double adjustY(int idx)
             /*
              * Note / octave parameter.
              */
-            else if (p_bit_desc[i].step_size == NOTE2) {
+            else if (document->p_bit_desc[i].step_size == NOTE2) {
                 Bit99ParameterValue value;
 
-                bit99_decode_parameter(document->bitmap,
-                                       i,
-                                       &value);
+                bit99_decode_parameter(document->p_bit_desc,
+                                    document->bitmap, i, &value);
 
                 NSPopUpButton *popup1 =
                     [[NSPopUpButton alloc]
@@ -824,12 +845,11 @@ double adjustY(int idx)
             /*
              * LFO flags, byte 1
              */
-            else if (p_bit_desc[i].step_size == NOTE3) {
+            else if (document->p_bit_desc[i].step_size == NOTE3) {
                 Bit99ParameterValue value;
 
-                bit99_decode_parameter(document->bitmap,
-                                       i,
-                                       &value);
+                bit99_decode_parameter(document->p_bit_desc,
+                                    document->bitmap, i, &value);
 
                 const char *names[] = {
                     "DCO1", "DCO2", "VCF", "VCA"
@@ -896,12 +916,11 @@ double adjustY(int idx)
              * NOTE4, a few bits for the LFOs
              */
 
-            else if (p_bit_desc[i].step_size == NOTE4) {
+            else if (document->p_bit_desc[i].step_size == NOTE4) {
                 Bit99ParameterValue value;
 
-                bit99_decode_parameter(document->bitmap,
-                                       i,
-                                       &value);
+                bit99_decode_parameter(document->p_bit_desc,
+                                    document->bitmap, i, &value);
 
                 const char *wave_names[] = {
                     "No LFO",
@@ -1002,12 +1021,11 @@ double adjustY(int idx)
             /*
              * NOTE5: bits for the DCOs.
              */
-            else if (p_bit_desc[i].step_size == NOTE5)  {
+            else if (document->p_bit_desc[i].step_size == NOTE5)  {
                 Bit99ParameterValue value;
 
-                bit99_decode_parameter(document->bitmap,
-                                       i,
-                                       &value);
+                bit99_decode_parameter(document->p_bit_desc,
+                                    document->bitmap, i, &value);
 
                 const char *dco_names[] = {
                     "triangle", "sawtooth", "pulse"
@@ -1076,7 +1094,7 @@ double adjustY(int idx)
             /*
              * ADSR drawing (and a separator below it)
              */
-            else if (p_bit_desc[i].step_size == NOTE6) {
+            else if (document->p_bit_desc[i].step_size == NOTE6) {
                 ADSRView *adsr = [[ADSRView alloc]
                     initWithFrame:NSMakeRect(calcX(k)+
                         LEFT_MARGIN + PADDING + LABEL_WIDTH+CONTROL_WIDTH,
@@ -1084,10 +1102,10 @@ double adjustY(int idx)
                 [self addSubview:adsr];
 
                 [adsr setDocument:document
-                           attack:p_bit_desc[i].param1
-                            decay:p_bit_desc[i].param2
-                          sustain:p_bit_desc[i].param3
-                          release:p_bit_desc[i].param4];
+                           attack:document->p_bit_desc[i].param1
+                            decay:document->p_bit_desc[i].param2
+                          sustain:document->p_bit_desc[i].param3
+                          release:document->p_bit_desc[i].param4];
                 [adsrViews addObject:adsr];
 
                 NSBox *separator = [[NSBox alloc]
@@ -1105,7 +1123,7 @@ double adjustY(int idx)
         NSButton *saveButton =
             [[NSButton alloc]
                 initWithFrame:
-                    NSMakeRect(calcX(BIT99_SHOWN_PARAMETERS_SIZE)+
+                    NSMakeRect(calcX(document->number_of_elements)+
                         LEFT_MARGIN,
                         y - ROW_HEIGHT,
                         80,
@@ -1121,7 +1139,7 @@ double adjustY(int idx)
         NSButton *uploadButton =
             [[NSButton alloc]
                 initWithFrame:
-                    NSMakeRect(calcX(BIT99_SHOWN_PARAMETERS_SIZE)+
+                    NSMakeRect(calcX(document->number_of_elements)+
                         LEFT_MARGIN+100,
                         y - ROW_HEIGHT,
                         80,
@@ -1136,7 +1154,7 @@ double adjustY(int idx)
         y -= 2*ROW_HEIGHT;
 
         NSBox *separator = [[NSBox alloc]
-            initWithFrame:NSMakeRect(calcX(BIT99_SHOWN_PARAMETERS_SIZE)+
+            initWithFrame:NSMakeRect(calcX(document->number_of_elements)+
                 0, y+ROW_HEIGHT/2, COLUMN_WIDTH, 1)];
         [separator setBoxType:NSBoxSeparator];
         [self addSubview:separator];
@@ -1299,7 +1317,7 @@ double adjustY(int idx)
 
     CGFloat contentHeight =
         TOP_MARGIN +
-        BIT99_SHOWN_PARAMETERS_SIZE * ROW_HEIGHT +
+        document->number_of_elements * ROW_HEIGHT +
         TOP_MARGIN;
 
 
@@ -1324,8 +1342,11 @@ double adjustY(int idx)
 
 @end
 
-void sysex_editor_open_bitmap74(const unsigned char *bitmap,
-                              int size,
+void sysex_editor_open_bitmap(const unsigned char *bitmap,
+                              const int size,
+                              bit_map *p_bit_desc,
+                              int *order,
+                              const int number_of_elements, 
                               const char *filename)
 {
     if(editorController == nil) {
@@ -1337,6 +1358,9 @@ void sysex_editor_open_bitmap74(const unsigned char *bitmap,
 
     memcpy(document->bitmap, bitmap, size);
     document->size = size;
+    document->order = order;
+    document->p_bit_desc = p_bit_desc;
+    document->number_of_elements = number_of_elements;
     document->modified = NO;
 
     if(filename != NULL)
@@ -1344,7 +1368,6 @@ void sysex_editor_open_bitmap74(const unsigned char *bitmap,
             [NSString stringWithUTF8String:filename];
 
     [editorController addDocument:document];
-
     [editorController showWindow:nil];
     [editorController.window makeKeyAndOrderFront:nil];
 }
@@ -1403,21 +1426,4 @@ int send_bitmap(unsigned char *bitmap, const int program)
     bit99_send_program_change(program);
 
     return r;
-}
-
-
-/*
- * ------------------------------------------------------------------------
- * Public entry point
- * ------------------------------------------------------------------------
- */
-
-void sysex_editor_show(void)
-{
-    if (editorController == nil)
-        editorController =
-            [[SysexEditorWindowController alloc] init];
-
-    [[editorController window] center];
-    [[editorController window] makeKeyAndOrderFront:nil];
 }

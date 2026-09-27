@@ -24,8 +24,21 @@ unsigned char bitmap_size;
 char file_name[PATH_MAX];
 
 
+bit_map p_bit_desc14[BIT99_PROGRAM_PARAMETERS_14] = {
+/* 0*/ { 0, "Lower program 1-75", 1, 0, 0, 0, 0},
+/* 1*/ { 0, "Upper program 1-75", 1, 0, 0, 0, 0},
+/* 2*/ { 0, "Mode", NOTE7, 0, 0, 0, 0},
+/* 3*/ { 64, "Split point key", 1, 0, 0, 0, 0},
+/* 3*/ { 65, "Upper transpose key", 1, 0, 0, 0, 0},
+/* 5*/ { 65, "Lower volume", 1, 0, 0, 0, 0},
+/* 6*/ { 65, "Upper volume", 1, 0, 0, 0, 0},
+};
 
-bit_map p_bit_desc[] = {
+int order14[BIT99_SHOWN_PARAMETERS_SIZE_14]=
+    {0, 1, 2, 3, 4, 5, 6};
+
+
+bit_map p_bit_desc74[BIT99_PROGRAM_PARAMETERS_74] = {
 /* 0*/ {12, "Wheel amount", 4, 0, 0, 0, 0},
 /* 1*/ {11, "LFO1 Depth", 4, 0, 0, 0, 0},
 /* 2*/ {10, "LFO1 Dynamic range", 4, 0, 0, 0, 0},
@@ -71,7 +84,7 @@ bit_map p_bit_desc[] = {
 #define VCA_ADSR 38
 
 
-char order[BIT99_SHOWN_PARAMETERS_SIZE]=
+int order74[BIT99_SHOWN_PARAMETERS_SIZE_74]=
     {34,35,36,SEPARATOR,30,32,2,1,SEPARATOR,24,25,16,26,VCF_ADSR,
      19,18,14,15,17,20,
      SEPARATOR,0,SEPARATOR,10,12,8,
@@ -82,15 +95,7 @@ char* octave[]={"32'", "16'", "8'", "4'"};
 
 char* lfo_wave[]={"No LFO", "triangle", "sawtooth", "pulse"};
 
-bit_map s_bit_desc[] = {
-    { 0, "Lower program 1-75", 1, 0, 0, 0, 0},
-    { 0, "Upper program 1-75", 1, 0, 0, 0, 0},
-    { 0, "Mode", -1, 0, 0, 0, 0},
-    {64, "Split Point, key", NOTE2, 0, 0, 0, 0},
-    {65, "Upper transpose, key", NOTE2, 0, 0, 0, 0},
-    {66, "Lower volume", 4, 0, 0, 0, 0},
-    {67, "Upper volume", 4, 0, 0, 0, 0},
-};
+
 
 char* key[] = {
     "C", "C#", "D", "D#", "E", "E#", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -220,7 +225,7 @@ void bit99_process_byte(int ch)
                 state=IDLE;
                 gui_printf("Bitmap detected (size=%d)\n", dump_pointer);
                 if(dump_pointer==74) {
-                    bit99_decode_program_bitmap();
+                    bit99_decode_program_bitmap74();
                     bitmap_size=BITMAP_74;
                 } else if(dump_pointer==14) {
                     bit99_decode_split_double_bitmap();
@@ -263,10 +268,12 @@ int bit99_sysex(char *fname)
 
     fclose(fin);
 
-    if(bitmap_size==BITMAP_74)
-        sysex_editor_open_bitmap74(bitmap_p, dump_pointer, fname);
-    else if(bitmap_size==BITMAP_14) {
-        gui_printf("Not yet available!\n");
+    if(bitmap_size==BITMAP_74) {
+        sysex_editor_open_bitmap(bitmap_p, dump_pointer,
+            p_bit_desc74, order74, BIT99_SHOWN_PARAMETERS_SIZE_74, fname);
+    } else if(bitmap_size==BITMAP_14) {
+        sysex_editor_open_bitmap(bitmap_p, dump_pointer,
+            p_bit_desc14, order14, BIT99_SHOWN_PARAMETERS_SIZE_14, fname);
     } else {
         gui_printf("The file does not contain a program.\n");
     }
@@ -308,14 +315,15 @@ set_parameter_data(unsigned char *bitmap, int index, int data)
  * Decode one program parameter.
  */
 int
-bit99_decode_parameter(const unsigned char *bitmap,
+bit99_decode_parameter(const bit_map *p_bit_desc,
+                       const unsigned char *bitmap,
                        int index,
                        Bit99ParameterValue *result)
 {
     int data;
 
     if (bitmap == NULL || result == NULL ||
-        index < 0 || index >= BIT99_PROGRAM_PARAMETERS)
+        index < 0 || index >= BIT99_PROGRAM_PARAMETERS_74) // TODO: what if 14?
         return -1;
 
     memset(result, 0, sizeof(*result));
@@ -418,15 +426,16 @@ bit99_decode_parameter(const unsigned char *bitmap,
 /*
  * Encode one program parameter.
  */
-int bit99_encode_parameter(unsigned char *bitmap,
-                       int index,
-                       const Bit99ParameterValue *value)
+int bit99_encode_parameter(const bit_map *p_bit_desc,
+                        unsigned char *bitmap,
+                        int index,
+                        const Bit99ParameterValue *value)
 {
     int data;
 
 
     if (bitmap == NULL || value == NULL ||
-        index < 0 || index >= BIT99_PROGRAM_PARAMETERS)
+        index < 0 || index >= BIT99_PROGRAM_PARAMETERS_74) // TODO what if 14?
     {
         return -1;
     }
@@ -528,15 +537,15 @@ void bit99_decode_split_double_bitmap(void)
     gui_printf_bold(
         "**************************************************************\n");
 
-    for(i=0; i<7; ++i) {
+    for(i=0; i<BIT99_PROGRAM_PARAMETERS_14; ++i) {
         data=bitmap_p[2*i]+(bitmap_p[2*i+1]<<4);
-        if(s_bit_desc[i].parameter>0) {
-            gui_printf("%2d,",s_bit_desc[i].parameter);
+        if(p_bit_desc14[i].parameter>0) {
+            gui_printf("%2d,",p_bit_desc14[i].parameter);
         } else {
             gui_printf("   ");
         }
-        gui_printf(" %24s:",s_bit_desc[i].description);
-        if(s_bit_desc[i].step_size==-1) {          // Split/double mode
+        gui_printf(" %24s:",p_bit_desc14[i].description);
+        if(p_bit_desc14[i].step_size==NOTE7) {          // Split/double mode
             if(data==1) {
                 gui_printf(" Split");
             } else if(data==2) {
@@ -544,10 +553,10 @@ void bit99_decode_split_double_bitmap(void)
             } else {
                 gui_printf(" Unrecognized mode!\n");
             }
-         } else if(s_bit_desc[i].step_size==NOTE2) {   // Key
+         } else if(p_bit_desc14[i].step_size==NOTE2) {   // Key
             gui_printf(" %d (%s%d)",data+1, key[data%12], data/12+1);
          } else {
-            gui_printf(" %d",data/s_bit_desc[i].step_size);
+            gui_printf(" %d",data/p_bit_desc14[i].step_size);
          }
          gui_printf("\n");
     }
@@ -555,7 +564,7 @@ void bit99_decode_split_double_bitmap(void)
         "**************************************************************\n");
 }
 
-void bit99_decode_program_bitmap(void)
+void bit99_decode_program_bitmap74(void)
 {
     int k;
     int i;
@@ -568,27 +577,27 @@ void bit99_decode_program_bitmap(void)
     gui_printf_bold(
         "**************************************************************\n");
 
-    for (k = 0; k < BIT99_PROGRAM_PARAMETERS; ++k) {
+    for (k = 0; k < BIT99_PROGRAM_PARAMETERS_74; ++k) {
 
-        i = order[k];
+        i = order74[k];
         if (i<0) {
             gui_printf("");
             continue;
         }
 
-        if (p_bit_desc[i].parameter > 0)
-            gui_printf("%2d,", p_bit_desc[i].parameter);
+        if (p_bit_desc74[i].parameter > 0)
+            gui_printf("%2d,", p_bit_desc74[i].parameter);
         else
             gui_printf("   ");
 
-        gui_printf(" %24s:", p_bit_desc[i].description);
+        gui_printf(" %24s:", p_bit_desc74[i].description);
 
-        if (bit99_decode_parameter(bitmap_p, i, &value) != 0) {
+        if (bit99_decode_parameter(p_bit_desc74, bitmap_p, i, &value) != 0) {
             gui_printf(" ERROR\n");
             continue;
         }
 
-        switch (p_bit_desc[i].step_size) {
+        switch (p_bit_desc74[i].step_size) {
 
         case NOTE1:
             gui_printf(" %d\n", value.value);
