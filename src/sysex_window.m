@@ -1231,15 +1231,20 @@ double adjustY(int idx)
         [vert_separator setBorderType:NSNoBorder];
         [vert_separator setFillColor:[NSColor separatorColor]];
 
-        [self addSubview:vert_separator];
+        // Add the vertical separator only if needed (i.e. we are using two
+        // columns).
+        if(document->number_of_elements>NROW)
+            [self addSubview:vert_separator];
+        
+        if (y<min_y)
+            min_y=y;
 
         min_y -= ROW_HEIGHT;
 
         CGFloat contentHeight = frame.size.height - min_y;
         CGFloat dy = contentHeight - frame.size.height;
 
-        [self setFrameSize:
-            NSMakeSize(totalwidth, contentHeight)];
+        [self setFrameSize: NSMakeSize(totalwidth, contentHeight)];
 
         for (NSView *view in [self subviews]) {
             NSRect r = [view frame];
