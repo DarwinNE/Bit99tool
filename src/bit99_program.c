@@ -28,8 +28,8 @@ bit_map p_bit_desc14[BIT99_PROGRAM_PARAMETERS_14] = {
 /* 0*/ { 0, "Lower program 1-75", 1, 0, 0, 0, 0},
 /* 1*/ { 0, "Upper program 1-75", 1, 0, 0, 0, 0},
 /* 2*/ { 0, "Mode", NOTE7, 0, 0, 0, 0},
-/* 3*/ { 64, "Split point key", 1, 0, 0, 0, 0},
-/* 3*/ { 65, "Upper transpose key", 1, 0, 0, 0, 0},
+/* 3*/ { 64, "Split point key", NOTE8, 0, 0, 0, 0},
+/* 3*/ { 65, "Upper transpose key", NOTE8, 0, 0, 0, 0},
 /* 5*/ { 66, "Lower volume", 4, 0, 0, 0, 0},
 /* 6*/ { 67, "Upper volume", 4, 0, 0, 0, 0},
 };
@@ -90,14 +90,20 @@ int order74[BIT99_SHOWN_PARAMETERS_SIZE_74]=
      7,SEPARATOR,11,13,9,5,SEPARATOR,
      22,23,6,SEPARATOR,27,28,21,29,VCA_ADSR,31,33,4,3};
 
-char* octave[]={"32'", "16'", "8'", "4'"};
+char* octave[OCTAVE_SIZE]={"32'", "16'", "8'", "4'"};
 
-char* lfo_wave[]={"No LFO", "triangle", "sawtooth", "pulse"};
+char* lfo_wave[WAVE_SIZE]={"No LFO", "triangle", "sawtooth", "pulse"};
 
+char* key[KEY_SIZE] = {
+    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
+};
 
-
-char* key[] = {
-    "C", "C#", "D", "D#", "E", "E#", "F", "F#", "G", "G#", "A", "A#", "B"
+char* keyboard[KEYBOARD_SIZE]= {
+    "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
+    "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
+    "C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
+    "C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4",
+    "C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5"
 };
 
 void bit99_process_byte(int ch)
@@ -411,6 +417,10 @@ bit99_decode_parameter(const bit_map *p_bit_desc,
         result->value = data;
         break;
 
+    case NOTE8:
+        result->value = data;
+        break;
+
     /*
      * Normal numerical parameter.
      */
@@ -508,6 +518,9 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
             data = value->value;
             break;
 
+        case NOTE8:
+            data = value->value;
+            break;
 
         /*
          * Normal numerical parameter.

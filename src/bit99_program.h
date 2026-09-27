@@ -14,6 +14,11 @@
 #define BIT99_PROGRAM_BITMAP_SIZE_14 (2 * BIT99_PROGRAM_PARAMETERS_14)
 #define BIT99_SHOWN_PARAMETERS_SIZE_14 7
 
+#define WAVE_SIZE 4
+#define KEY_SIZE 12
+#define OCTAVE_SIZE 4
+#define KEYBOARD_SIZE 12*5
+
 
 #define MAX_DUMP_SIZE 256
 
@@ -24,6 +29,7 @@
 #define NOTE5   -5  /* DCO flags */ 
 #define NOTE6   -6  /* ADSR representation */
 #define NOTE7   -7  /* Split layer mode */
+#define NOTE8   -8  /* Split/transpose point */
 
 #define SEPARATOR -1
 

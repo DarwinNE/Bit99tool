@@ -15,6 +15,8 @@
 extern char *octave[];
 extern char *lfo_wave[];
 extern char *key[];
+extern char *keyboard[];
+
 extern unsigned char program_number;
 extern char file_name[PATH_MAX];
 
@@ -474,8 +476,27 @@ static void parameterChanged(id sender)
         {
             document->modified = YES;
         }
-        gui_printf("parameter (mode) change: %d\n",value.value);
+        return;
+    }
+    /*
+     * Split/transpose point
+     */
+    if (document->p_bit_desc[index].step_size == NOTE8) {
+        index = [info[@"index"] intValue];
+        int point = (int)[sender indexOfSelectedItem];
 
+        Bit99ParameterValue value;
+
+        bit99_decode_parameter(document->p_bit_desc,
+                        document->bitmap, index, &value);
+        
+        value.value = point;
+
+        if (bit99_encode_parameter(document->p_bit_desc,
+                                document->bitmap, index, &value) == 0)
+        {
+            document->modified = YES;
+        }
         return;
     }
 }
@@ -812,7 +833,9 @@ double adjustY(int idx)
                 setupDSEG7Popup(popup2);
 
 
-                for (int octaveIndex = 0; octaveIndex < 4; ++octaveIndex) {
+                for (int octaveIndex = 0; octaveIndex < OCTAVE_SIZE;
+                    ++octaveIndex)
+                {
                     NSString *name =
                             [NSString stringWithFormat:
                                 @"%s",
@@ -820,7 +843,7 @@ double adjustY(int idx)
 
                         [popup1 addItemWithTitle:name];
                 }
-                for (int keyIndex = 0; keyIndex < 12; ++keyIndex) {
+                for (int keyIndex = 0; keyIndex < KEY_SIZE; ++keyIndex) {
                     NSString *name =
                             [NSString stringWithFormat:
                                 @"%s",
@@ -1175,11 +1198,51 @@ double adjustY(int idx)
                 [self addSubview:popup];
                 [controls addObject:popup];
             }
+            /*
+             * Slit/double selector
+             */
+            else if (document->p_bit_desc[i].step_size == NOTE8)  {
+                Bit99ParameterValue value;
+    
+                bit99_decode_parameter(document->p_bit_desc,
+                                    document->bitmap, i, &value);
+                NSPopUpButton *popup =
+                    [[NSPopUpButton alloc]
+                        initWithFrame:
+                            NSMakeRect(calcX(k)+
+                                LEFT_MARGIN + LABEL_WIDTH + PADDING,
+                                y,
+                                CONTROL_WIDTH,
+                                22)];
+                setupDSEG7Popup(popup);
+    
+                for(int keyboardIndex=0; keyboardIndex<KEYBOARD_SIZE;
+                    ++keyboardIndex)
+                {
+                    [popup addItemWithTitle: [NSString stringWithFormat:
+                                @"%s",
+                                keyboard[keyboardIndex]]];
+                }
+                NSDictionary *info = @{
+                    @"document":
+                        [NSValue valueWithPointer:(
+                            __bridge const void *)document],
+                    @"index": @(i)
+                };
+                setParameterInfo(popup, info);
+                [popup selectItemAtIndex:value.value];
+                
+                [popup setTarget:self];
+                [popup setAction:@selector(parameterChanged:)];
+                [self addSubview:popup];
+                [controls addObject:popup];
+            }
 
             y -= ROW_HEIGHT;
             if (y<min_y)
                 min_y=y;
         }
+        
 
         NSButton *saveButton =
             [[NSButton alloc]
@@ -1235,7 +1298,7 @@ double adjustY(int idx)
         // columns).
         if(document->number_of_elements>NROW)
             [self addSubview:vert_separator];
-        
+
         if (y<min_y)
             min_y=y;
 
