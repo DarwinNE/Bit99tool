@@ -38,6 +38,95 @@ extern char file_name[PATH_MAX];
 
 static char parameterInfoKey;
 
+@interface SysexTabButton : NSView
+
+@property(nonatomic, strong) NSTabViewItem *tabItem;
+
+- (instancetype)initWithTabViewItem:(NSTabViewItem *)item
+                              target:(id)target;
+
+- (void)setSelected:(BOOL)selected;
+
+@end
+
+@implementation SysexTabButton
+{
+    NSButton *selectButton;
+    NSButton *closeButton;
+    id target;
+}
+
+- (void)setSelected:(BOOL)selected
+{
+    [selectButton setState:
+        selected ?
+            NSControlStateValueOn :
+            NSControlStateValueOff];
+}
+
+- (instancetype)initWithTabViewItem:(NSTabViewItem *)item
+                              target:(id)aTarget
+{
+    self = [super initWithFrame:NSMakeRect(0, 0, 160, 28)];
+
+    if (self)
+    {
+        _tabItem = item;
+        target = aTarget;
+
+        selectButton =
+            [NSButton buttonWithTitle:[item label]
+                               target:target
+                               action:@selector(selectTabButton:)];
+
+        [selectButton setBezelStyle:
+            NSBezelStyleTexturedRounded];
+
+        [selectButton setButtonType:
+            NSButtonTypePushOnPushOff];
+
+        closeButton =
+            [NSButton buttonWithTitle:@"×"
+                               target:target
+                               action:@selector(closeTabButton:)];
+
+        [closeButton setBordered:NO];
+
+        [self addSubview:selectButton];
+        [self addSubview:closeButton];
+    }
+
+    return self;
+}
+
+- (NSSize)intrinsicContentSize
+{
+    return NSMakeSize(160.0, 28.0);
+}
+
+- (void)layout
+{
+    [super layout];
+
+    CGFloat closeWidth = 24.0;
+
+    [closeButton setFrame:
+        NSMakeRect(self.bounds.size.width - closeWidth,
+                   0,
+                   closeWidth,
+                   self.bounds.size.height)];
+
+    [selectButton setFrame:
+        NSMakeRect(0,
+                   0,
+                   self.bounds.size.width - closeWidth,
+                   self.bounds.size.height)];
+}
+
+@end
+
+
+
 static void setupDSEG7Popup(NSPopUpButton *popup)
 {
 
@@ -280,6 +369,7 @@ static NSDictionary *getParameterInfo(NSControl *control)
     NSMutableArray *adsrViews;
     NSTextField *fileNameField;
     Bit99TextField *programField;
+
 }
 - (id)initWithFrame:(NSRect)frame
            document:(SysexDocument *)doc;
@@ -290,6 +380,7 @@ static NSDictionary *getParameterInfo(NSControl *control)
     NSWindowController <NSTabViewDelegate>
 {
     NSTabView *tabView;
+    NSStackView *tabBar;
 
     SysexDocument *documents[SYSEX_MAX_DOCUMENTS];
     int documentCount;
@@ -582,6 +673,8 @@ double adjustY(int idx)
         document = doc;
         controls = [[NSMutableArray alloc] init];
         adsrViews = [[NSMutableArray alloc] init];
+        
+   
 
         CGFloat totalwidth = 2*COLUMN_WIDTH;
         CGFloat y = frame.size.height - TOP_MARGIN - ROW_HEIGHT;
@@ -1381,25 +1474,54 @@ double adjustY(int idx)
     self = [super initWithWindow:window];
 
     if (self) {
-
+    
         [window setTitle:@"Bit 99 SysEx Editor"];
-
+    
+        NSView *contentView = [window contentView];
+        NSRect contentFrame = [contentView bounds];
+    
+        CGFloat tabBarHeight = 30.0;
+    
         tabView =
             [[NSTabView alloc]
                 initWithFrame:
-                    [[window contentView] bounds]];
-
+                    NSMakeRect(0,
+                               0,
+                               contentFrame.size.width,
+                               contentFrame.size.height -
+                                   tabBarHeight)];
+    
         [tabView setAutoresizingMask:
             NSViewWidthSizable |
             NSViewHeightSizable];
-
+    
+        [tabView setTabViewType:NSNoTabsNoBorder];
         [tabView setDelegate:self];
-
-        [[window contentView] addSubview:tabView];
-
+    
+        tabBar =
+            [[NSStackView alloc]
+                initWithFrame:
+                    NSMakeRect(0,
+                               contentFrame.size.height -
+                                   tabBarHeight,
+                               contentFrame.size.width,
+                               tabBarHeight)];
+    
+        [tabBar setAutoresizingMask:
+            NSViewWidthSizable |
+            NSViewMinYMargin];
+    
+        [tabBar setOrientation:
+            NSUserInterfaceLayoutOrientationHorizontal];
+    
+        [tabBar setSpacing:2.0];
+        [tabBar setAlignment:NSLayoutAttributeCenterY];
+    
+        [contentView addSubview:tabView];
+        [contentView addSubview:tabBar];
+    
         documentCount = 0;
     }
-
     return self;
 }
 
@@ -1415,9 +1537,7 @@ double adjustY(int idx)
 
     NSTabViewItem *item =
         [[NSTabViewItem alloc]
-            initWithIdentifier:
-                @(documentCount - 1)];
-
+            initWithIdentifier:document];
 
     NSString *title =
         document->filename ?
@@ -1440,8 +1560,7 @@ double adjustY(int idx)
             initWithFrame:contentFrame];
 
     [scroll setHasVerticalScroller:YES];
-    [scroll setHasHorizontalScroller:NO];
-    [scroll setBorderType:NSNoBorder];
+    [scroll setHasHorizontalScroller:YES];
 
 
     CGFloat contentHeight =
@@ -1467,6 +1586,67 @@ double adjustY(int idx)
     [tabView addTabViewItem:item];
 
     [tabView selectTabViewItem:item];
+    SysexTabButton *button =
+        [[SysexTabButton alloc]
+            initWithTabViewItem:item
+                         target:self];
+    
+    [tabBar addArrangedSubview:button];
+    
+    [tabView selectTabViewItem:item];
+    
+    //[button setBezelStyle:NSBezelStyleTexturedRounded];
+    //[button setButtonType:NSButtonTypePushOnPushOff];    
+    //[button setTabItem:item];
+    
+    [tabBar addArrangedSubview:button];
+    
+    [tabView selectTabViewItem:item];
+}
+
+- (void)tabView:(NSTabView *)tabView
+    didSelectTabViewItem:(NSTabViewItem *)tabViewItem
+{
+    for (NSView *view in [tabBar arrangedSubviews])
+    {
+        if (![view isKindOfClass:[SysexTabButton class]])
+            continue;
+
+        SysexTabButton *button =
+            (SysexTabButton *)view;
+
+        [button setSelected:
+            button.tabItem == tabViewItem];
+    }
+}
+
+- (void)selectTabButton:(id)sender
+{
+    NSView *view = [sender superview];
+
+    if (![view isKindOfClass:[SysexTabButton class]])
+        return;
+
+    SysexTabButton *button =
+        (SysexTabButton *)view;
+    gui_printf("select tab \n");
+    [tabView selectTabViewItem:button.tabItem];
+}
+
+- (void)closeTabButton:(id)sender
+{
+    SysexTabButton *button =
+        (SysexTabButton *)[sender superview];
+
+    if (![button isKindOfClass:[SysexTabButton class]])
+        return;
+
+    NSTabViewItem *item = button.tabItem;
+
+    [tabView removeTabViewItem:item];
+
+    [tabBar removeArrangedSubview:button];
+    [button removeFromSuperview];
 }
 
 @end
