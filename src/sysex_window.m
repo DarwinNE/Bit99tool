@@ -54,14 +54,54 @@ static char parameterInfoKey;
     NSButton *selectButton;
     NSButton *closeButton;
     id target;
+    BOOL _selected;
 }
 
 - (void)setSelected:(BOOL)selected
 {
-    [selectButton setState:
-        selected ?
-            NSControlStateValueOn :
-            NSControlStateValueOff];
+    _selected = selected;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+    NSRect r = NSInsetRect(self.bounds, 0.5, 0.5);
+
+    NSColor *accent =
+        [NSColor colorWithCalibratedRed:0.0
+                                  green:0.65
+                                   blue:0.60
+                                  alpha:1.0];
+
+    NSColor *background =
+        [NSColor windowBackgroundColor];
+    
+    if (_selected)
+    {
+        background =
+            [background blendedColorWithFraction:0.10
+                                         ofColor:
+                                             [NSColor whiteColor]];
+    }
+    else
+    {
+        background =
+            [background blendedColorWithFraction:0.08
+                                         ofColor:
+                                             [NSColor blackColor]];
+    }
+    [background setFill];
+
+    NSBezierPath *path =
+        [NSBezierPath bezierPathWithRoundedRect:r
+                                        xRadius:2.0
+                                        yRadius:2.0];
+
+    [path fill];
+
+    [accent setStroke];
+    [path setLineWidth:_selected ? 1.5 : 1.0];
+    [path stroke];
 }
 
 - (instancetype)initWithTabViewItem:(NSTabViewItem *)item
@@ -79,12 +119,19 @@ static char parameterInfoKey;
                                target:target
                                action:@selector(selectTabButton:)];
 
-        [selectButton setBezelStyle:
-            NSBezelStyleTexturedRounded];
-
-        [selectButton setButtonType:
-            NSButtonTypePushOnPushOff];
-
+        [selectButton setBordered:NO];
+        [selectButton setButtonType:NSButtonTypeMomentaryPushIn];
+        
+        [selectButton setAlignment:NSTextAlignmentLeft];
+        [selectButton setAttributedTitle:
+            [[NSAttributedString alloc]
+                initWithString:[item label]
+                    attributes:@{
+                        NSForegroundColorAttributeName:
+                            [NSColor labelColor],
+                        NSFontAttributeName:
+                            [NSFont boldSystemFontOfSize:12.0]
+                    }]];
         closeButton =
             [NSButton buttonWithTitle:@"×"
                                target:target
@@ -117,9 +164,9 @@ static char parameterInfoKey;
                    self.bounds.size.height)];
 
     [selectButton setFrame:
-        NSMakeRect(0,
+        NSMakeRect(8,
                    0,
-                   self.bounds.size.width - closeWidth,
+                   self.bounds.size.width - closeWidth-8,
                    self.bounds.size.height)];
 }
 
@@ -1519,7 +1566,21 @@ double adjustY(int idx)
     
         [contentView addSubview:tabView];
         [contentView addSubview:tabBar];
-    
+        NSBox *separator =
+            [[NSBox alloc]
+                initWithFrame:
+                    NSMakeRect(0,
+                               contentFrame.size.height -
+                                   tabBarHeight,
+                               contentFrame.size.width,
+                               1)];
+        
+        [separator setBoxType:NSBoxSeparator];
+        [separator setAutoresizingMask:
+            NSViewWidthSizable |
+            NSViewMinYMargin];
+        
+        [contentView addSubview:separator];
         documentCount = 0;
     }
     return self;
@@ -1591,13 +1652,10 @@ double adjustY(int idx)
             initWithTabViewItem:item
                          target:self];
     
+    [button setSelected:YES];
     [tabBar addArrangedSubview:button];
     
     [tabView selectTabViewItem:item];
-    
-    //[button setBezelStyle:NSBezelStyleTexturedRounded];
-    //[button setButtonType:NSButtonTypePushOnPushOff];    
-    //[button setTabItem:item];
     
     [tabBar addArrangedSubview:button];
     
