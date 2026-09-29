@@ -277,10 +277,12 @@ int bit99_sysex(char *fname)
     if(bitmap_size==BITMAP_74) {
         gui_printf("Open a 74-byte bitmap.\n");
         sysex_editor_open_bitmap(bitmap_p, dump_pointer,
-            p_bit_desc74, order74, BIT99_SHOWN_PARAMETERS_SIZE_74, fname);
+            p_bit_desc74, order74, BIT99_SHOWN_PARAMETERS_SIZE_74, 
+            program_number, fname);
     } else if(bitmap_size==BITMAP_14) {
         sysex_editor_open_bitmap(bitmap_p, dump_pointer,
-            p_bit_desc14, order14, BIT99_SHOWN_PARAMETERS_SIZE_14, fname);
+            p_bit_desc14, order14, BIT99_SHOWN_PARAMETERS_SIZE_14, 
+            program_number, fname);
     } else {
         gui_printf("The file does not contain a program.\n");
     }

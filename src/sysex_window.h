@@ -9,5 +9,6 @@ void sysex_editor_open_bitmap(const unsigned char *bitmap,
                               bit_map *p_bit_desc,
                               int *order,
                               const int number_of_elements, 
+                              const int programNumber,
                               const char *filename);
 #endif

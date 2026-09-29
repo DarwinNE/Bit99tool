@@ -17,7 +17,6 @@ extern char *lfo_wave[];
 extern char *key[];
 extern char *keyboard[];
 
-extern unsigned char program_number;
 extern char file_name[PATH_MAX];
 
 
@@ -55,6 +54,19 @@ static char parameterInfoKey;
     NSButton *closeButton;
     id target;
     BOOL _selected;
+}
+
+- (void)setLabel:(NSString *)label
+{
+    [selectButton setAttributedTitle:
+        [[NSAttributedString alloc]
+            initWithString:label
+                attributes:@{
+                    NSForegroundColorAttributeName:
+                        [NSColor labelColor],
+                    NSFontAttributeName:
+                        [NSFont boldSystemFontOfSize:12.0]
+                }]];
 }
 
 - (void)setSelected:(BOOL)selected
@@ -123,15 +135,7 @@ static char parameterInfoKey;
         [selectButton setButtonType:NSButtonTypeMomentaryPushIn];
         
         [selectButton setAlignment:NSTextAlignmentLeft];
-        [selectButton setAttributedTitle:
-            [[NSAttributedString alloc]
-                initWithString:[item label]
-                    attributes:@{
-                        NSForegroundColorAttributeName:
-                            [NSColor labelColor],
-                        NSFontAttributeName:
-                            [NSFont boldSystemFontOfSize:12.0]
-                    }]];
+        [self setLabel:[item label]];
         closeButton =
             [NSButton buttonWithTitle:@"×"
                                target:target
@@ -260,6 +264,7 @@ static void setupDSEG7Field(NSTextField *field)
                                     // i.e. number of shown interface elements.
     BOOL modified;                  // Flag: has it been modified or not.
     NSString *filename;             // Current filename.
+    int programNumber;
 }
 @end
 
@@ -428,12 +433,21 @@ static NSDictionary *getParameterInfo(NSControl *control)
 {
     NSTabView *tabView;
     NSStackView *tabBar;
+    NSScrollView *tabScrollView;
+    NSTextField *leftIndicator;
+    NSTextField *rightIndicator;
 
     SysexDocument *documents[SYSEX_MAX_DOCUMENTS];
     int documentCount;
 }
+
 - (void)addDocument:(SysexDocument *)document;
+
+- (void)programNumberDidChange:(NSNotification *)notification;
+
 @end
+
+
 
 
 static SysexEditorWindowController *editorController = nil;
@@ -466,18 +480,7 @@ static NSTextField *createLabel(NSString *text, NSRect frame)
  * ------------------------------------------------------------------------
  */
 
-static void programNumberChanged(id sender)
-{
-    int valuep = [sender intValue];
 
-    if (valuep < 1)
-        valuep = 0;
-    else if (valuep > 74)
-        valuep = 74;
-
-    [sender setIntValue:valuep];
-    program_number = valuep;
-}
 
 static void octaveChanged(id sender)
 {
@@ -677,6 +680,33 @@ static void parameterChanged(id sender)
         }];
 }
 
+-(void)programNumberChanged:(id)sender
+{
+    NSDictionary *info = getParameterInfo(sender);
+    SysexDocument *document =
+        (SysexDocument *)[info[@"document"] pointerValue];
+
+    int valuep = [sender intValue];
+
+
+    if (valuep < 1)
+        valuep = 0;
+    else if (valuep > 99)
+        valuep = 99;
+
+    [sender setIntValue:valuep];
+    document->programNumber=valuep;
+    
+    gui_printf("programNumberChanged: %d\n",
+           document->programNumber);
+
+    
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:
+            @"SysexDocumentProgramNumberDidChange"
+                          object:document];
+}
+
 - (void)fileNameChanged:(id)sender
 {
     gui_printf("File name changed!\n");
@@ -805,8 +835,7 @@ double adjustY(int idx)
         [formatter_p setMinimum:@1];
         [formatter_p setMaximum:@99];
 
-        [programField setIntValue:program_number];
-
+        [programField setIntValue:document->programNumber];
         NSDictionary *info1 = @{
             @"document":
                 [NSValue valueWithPointer:(
@@ -1456,7 +1485,6 @@ double adjustY(int idx)
         }
         [self setFrameSize:NSMakeSize(totalwidth, contentHeight)];
     }
-
     return self;
 }
 
@@ -1545,27 +1573,44 @@ double adjustY(int idx)
         [tabView setTabViewType:NSNoTabsNoBorder];
         [tabView setDelegate:self];
     
-        tabBar =
-            [[NSStackView alloc]
+        tabScrollView =
+            [[NSScrollView alloc]
                 initWithFrame:
                     NSMakeRect(0,
                                contentFrame.size.height -
                                    tabBarHeight,
                                contentFrame.size.width,
                                tabBarHeight)];
-    
-        [tabBar setAutoresizingMask:
+        
+        [tabScrollView setHasHorizontalScroller:YES];
+        [tabScrollView setHasVerticalScroller:NO];
+        [tabScrollView setScrollerStyle:NSScrollerStyleOverlay];
+        [tabScrollView setAutohidesScrollers:YES];
+        [contentView addSubview:tabView];
+        [contentView addSubview:tabScrollView];
+        
+        [tabScrollView setAutoresizingMask:
             NSViewWidthSizable |
             NSViewMinYMargin];
-    
+                
+        tabBar =
+            [[NSStackView alloc]
+                initWithFrame:
+                    NSMakeRect(0,
+                               0,
+                               contentFrame.size.width,
+                               tabBarHeight)];
+        
         [tabBar setOrientation:
             NSUserInterfaceLayoutOrientationHorizontal];
-    
+        
         [tabBar setSpacing:2.0];
         [tabBar setAlignment:NSLayoutAttributeCenterY];
-    
+        
+        [tabScrollView setDocumentView:tabBar];
+        
         [contentView addSubview:tabView];
-        [contentView addSubview:tabBar];
+        [contentView addSubview:tabScrollView];
         NSBox *separator =
             [[NSBox alloc]
                 initWithFrame:
@@ -1582,10 +1627,193 @@ double adjustY(int idx)
         
         [contentView addSubview:separator];
         documentCount = 0;
+
+        leftIndicator =
+            [[NSTextField alloc]
+                initWithFrame:
+                    NSMakeRect(0,
+                               3,
+                               22,
+                               tabBarHeight)];
+        
+        [leftIndicator setStringValue:@"‹"];
+        [leftIndicator setEditable:NO];
+        [leftIndicator setSelectable:NO];
+        [leftIndicator setBordered:NO];
+        [leftIndicator setDrawsBackground:YES];
+        [leftIndicator setBackgroundColor:
+          [[NSColor windowBackgroundColor]
+                colorWithAlphaComponent:0.90]];
+        [leftIndicator setAlignment:NSTextAlignmentCenter];
+        [leftIndicator setFont:
+            [NSFont systemFontOfSize:18.0]];
+        [leftIndicator setTextColor:
+            [NSColor secondaryLabelColor]];
+        [leftIndicator setAutoresizingMask:0];
+        [leftIndicator setHidden:YES];
+        
+        [tabScrollView addSubview:leftIndicator];
+        
+        rightIndicator =
+            [[NSTextField alloc]
+                initWithFrame:
+                    NSMakeRect(
+                        tabScrollView.bounds.size.width - 22,
+                        3,
+                        22,
+                        tabBarHeight)];
+        
+        [rightIndicator setStringValue:@"›"];
+        [rightIndicator setEditable:NO];
+        [rightIndicator setSelectable:NO];
+        [rightIndicator setBordered:NO];
+        [rightIndicator setDrawsBackground:YES];
+        [rightIndicator setBackgroundColor:
+            [[NSColor windowBackgroundColor]
+                colorWithAlphaComponent:0.90]];
+        [rightIndicator setAlignment:NSTextAlignmentCenter];
+        [rightIndicator setFont:
+            [NSFont systemFontOfSize:18.0]];
+        [rightIndicator setTextColor:
+            [NSColor secondaryLabelColor]];
+        [rightIndicator setAutoresizingMask:
+            NSViewMinXMargin];
+        [rightIndicator setHidden:YES];
+        
+        [tabScrollView addSubview:rightIndicator];
+        
+        [rightIndicator setAutoresizingMask:
+            NSViewMinXMargin |
+            NSViewMinYMargin];
+        
+        [leftIndicator setAutoresizingMask:
+            NSViewMinYMargin];
+        
+        [rightIndicator setAutoresizingMask:
+            NSViewMinXMargin |
+            NSViewMinYMargin];
+        
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(programNumberDidChange:)
+                   name:@"SysexDocumentProgramNumberDidChange"
+                 object:nil];
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(programNumberDidChange:)
+                   name:@"SysexDocumentProgramNumberDidChange"
+                 object:nil];
     }
     return self;
 }
 
+- (void)updateTabScrollIndicators
+{
+    NSRect visible =
+        [[tabScrollView contentView] documentVisibleRect];
+
+    NSRect document =
+        [tabBar bounds];
+
+    BOOL overflow =
+        NSWidth(document) > NSWidth(visible) + 1.0;
+
+    [leftIndicator setHidden:!overflow];
+    [rightIndicator setHidden:!overflow];
+}
+
+- (void)updateTabBarWidth
+{
+    CGFloat width =
+        [tabBar fittingSize].width;
+
+    CGFloat height =
+        [tabScrollView contentSize].height;
+
+    if (width < [tabScrollView contentSize].width)
+        width = [tabScrollView contentSize].width;
+
+    [tabBar setFrameSize:
+        NSMakeSize(width, height)];
+
+    [self updateTabScrollIndicators];
+}
+
+- (void)updateTabLabels
+{
+    int counts[100] = {0};
+
+    /*
+     * Count open tabs for each program number.
+     */
+    for (NSView *view in [tabBar arrangedSubviews])
+    {
+        if (![view isKindOfClass:[SysexTabButton class]])
+            continue;
+
+        SysexTabButton *button =
+            (SysexTabButton *)view;
+
+        SysexDocument *document =
+            (SysexDocument *)[button.tabItem identifier];
+
+        int p = document->programNumber;
+
+        if (p >= 0 && p < 100)
+            counts[p]++;
+    }
+
+    /*
+     * Update all tab labels.
+     */
+    for (NSView *view in [tabBar arrangedSubviews])
+    {
+        if (![view isKindOfClass:[SysexTabButton class]])
+            continue;
+
+        SysexTabButton *button =
+            (SysexTabButton *)view;
+
+        NSTabViewItem *item = button.tabItem;
+
+        SysexDocument *document =
+            (SysexDocument *)[item identifier];
+
+        int p = document->programNumber;
+
+        NSString *title;
+
+        if (p >= 0 && p < 100 && counts[p] > 1)
+        {
+            NSString *filename =
+                document->filename ?
+                    [document->filename lastPathComponent] :
+                    @"Untitled";
+
+            title =
+                [NSString stringWithFormat:
+                    @"%d - %@", p, filename];
+        }
+        else
+        {
+            title =
+                [NSString stringWithFormat:@"%d", p];
+        }
+
+        [item setLabel:title];
+        [button setLabel:title];
+    }
+}
+
+- (void)programNumberDidChange:(NSNotification *)notification
+{
+    [self updateTabLabels];
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 
 - (void)addDocument:(SysexDocument *)document
 {
@@ -1601,13 +1829,10 @@ double adjustY(int idx)
             initWithIdentifier:document];
 
     NSString *title =
-        document->filename ?
-            [document->filename lastPathComponent] :
-            @"Untitled";
-
+        [NSString stringWithFormat:@"%02d",
+            document->programNumber];
 
     [item setLabel:title];
-
 
     /*
      * Leave room for the tab bar.
@@ -1646,20 +1871,26 @@ double adjustY(int idx)
 
     [tabView addTabViewItem:item];
 
-    [tabView selectTabViewItem:item];
+   [tabView addTabViewItem:item];
+
     SysexTabButton *button =
         [[SysexTabButton alloc]
             initWithTabViewItem:item
                          target:self];
     
-    [button setSelected:YES];
     [tabBar addArrangedSubview:button];
+    [self updateTabBarWidth];
+
     
     [tabView selectTabViewItem:item];
+    [tabScrollView
+        reflectScrolledClipView:
+            [tabScrollView contentView]];
+    [self updateTabBarWidth];
+
+    [tabBar scrollRectToVisible:[button frame]];
     
-    [tabBar addArrangedSubview:button];
-    
-    [tabView selectTabViewItem:item];
+    [self updateTabLabels];
 }
 
 - (void)tabView:(NSTabView *)tabView
@@ -1701,10 +1932,32 @@ double adjustY(int idx)
 
     NSTabViewItem *item = button.tabItem;
 
+    SysexDocument *document =
+        (SysexDocument *)[item identifier];
+
+    /*
+     * Remove the document from the document array.
+     */
+    for (int i = 0; i < documentCount; i++)
+    {
+        if (documents[i] != document)
+            continue;
+
+        for (int j = i; j < documentCount - 1; j++)
+            documents[j] = documents[j + 1];
+
+        documents[documentCount - 1] = nil;
+        documentCount--;
+
+        break;
+    }
+
     [tabView removeTabViewItem:item];
 
     [tabBar removeArrangedSubview:button];
     [button removeFromSuperview];
+
+    [self updateTabLabels];
 }
 
 @end
@@ -1714,6 +1967,7 @@ void sysex_editor_open_bitmap(const unsigned char *bitmap,
                               bit_map *p_bit_desc,
                               int *order,
                               const int number_of_elements, 
+                              const int programNumber,
                               const char *filename)
 {
     if(editorController == nil) {
@@ -1729,6 +1983,8 @@ void sysex_editor_open_bitmap(const unsigned char *bitmap,
     document->p_bit_desc = p_bit_desc;
     document->number_of_elements = number_of_elements;
     document->modified = NO;
+    document->programNumber = programNumber;
+
 
     if(filename != NULL)
         document->filename =
