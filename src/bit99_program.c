@@ -117,7 +117,7 @@ void bit99_process_byte(int ch)
             if(ch==0xF0) state=SYSEX_START;
             break;
         case EOX:
-            if(ch!=0xF7) gui_printf( "The SYSEX EOX is missing.\n");
+            if(ch!=SYSEX_END) gui_printf( "The SYSEX EOX is missing.\n");
             state=IDLE;
             break;
         case SYSEX_START:
@@ -254,6 +254,27 @@ void bit99_process_byte(int ch)
     }
 }
 
+int open_bitmap(int pp, char *fn)
+{
+    char file_name_with_number[PATH_MAX];
+    sprintf(file_name_with_number,"%s.%d",fn, pp);
+    
+    if(bitmap_size==BITMAP_74) {
+        gui_printf("Open a 74-byte bitmap.\n");
+        sysex_editor_open_bitmap(bitmap_p, dump_pointer,
+            p_bit_desc74, order74, BIT99_SHOWN_PARAMETERS_SIZE_74, 
+            pp, file_name_with_number);
+    } else if(bitmap_size==BITMAP_14) {
+        sysex_editor_open_bitmap(bitmap_p, dump_pointer,
+            p_bit_desc14, order14, BIT99_SHOWN_PARAMETERS_SIZE_14, 
+            pp, file_name_with_number);
+    } else {
+        gui_printf("The file does not contain a program.\n");
+        return 1;
+    }
+    return 0;
+}
+
 int bit99_sysex(char *fname)
 {
     gui_printf("Processing file: %s\n", fname);
@@ -267,28 +288,25 @@ int bit99_sysex(char *fname)
     }
     strncpy(file_name, fname, sizeof(file_name));
     int ch;
+    bitmap_size=0;
     do {
         ch = fgetc(fin);
         bit99_process_byte(ch);
+        if(ch==SYSEX_END && bitmap_size!=0) {
+            open_bitmap(program_number, file_name);
+            bitmap_size=0;
+        }
     } while(ch != EOF);
 
+    //open_bitmap(program_number, file_name);
     fclose(fin);
 
-    if(bitmap_size==BITMAP_74) {
-        gui_printf("Open a 74-byte bitmap.\n");
-        sysex_editor_open_bitmap(bitmap_p, dump_pointer,
-            p_bit_desc74, order74, BIT99_SHOWN_PARAMETERS_SIZE_74, 
-            program_number, fname);
-    } else if(bitmap_size==BITMAP_14) {
-        sysex_editor_open_bitmap(bitmap_p, dump_pointer,
-            p_bit_desc14, order14, BIT99_SHOWN_PARAMETERS_SIZE_14, 
-            program_number, fname);
-    } else {
-        gui_printf("The file does not contain a program.\n");
-    }
+    
         
     return 0;
 }
+
+
 
 
 /*
@@ -715,8 +733,8 @@ int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program)
         fwrite(bitmap, 1, 14, fout);
 
     unsigned char endsysx[] = {
-        0xF7,   // Sysex end
-        0xF7,   // Sysex end
+        SYSEX_END,   // Sysex end
+        SYSEX_END,   // Sysex end
     };
 
     fwrite(endsysx, 1, 2, fout);

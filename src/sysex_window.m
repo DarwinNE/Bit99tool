@@ -67,6 +67,7 @@ static char parameterInfoKey;
                     NSFontAttributeName:
                         [NSFont boldSystemFontOfSize:12.0]
                 }]];
+    [self invalidateIntrinsicContentSize];
 }
 
 - (void)setSelected:(BOOL)selected
@@ -133,8 +134,7 @@ static char parameterInfoKey;
 
         [selectButton setBordered:NO];
         [selectButton setButtonType:NSButtonTypeMomentaryPushIn];
-        
-        [selectButton setAlignment:NSTextAlignmentLeft];
+        [selectButton setAlignment:NSTextAlignmentCenter];
         [self setLabel:[item label]];
         closeButton =
             [NSButton buttonWithTitle:@"×"
@@ -150,9 +150,16 @@ static char parameterInfoKey;
     return self;
 }
 
+/*
+ * Size of a toolbar button.
+ */
 - (NSSize)intrinsicContentSize
 {
-    return NSMakeSize(160.0, 28.0);
+    NSSize size =
+        [[selectButton attributedTitle]
+            size];
+
+    return NSMakeSize(size.width + 65.0, 28.0);
 }
 
 - (void)layout
@@ -1555,7 +1562,7 @@ double adjustY(int idx)
         NSView *contentView = [window contentView];
         NSRect contentFrame = [contentView bounds];
     
-        CGFloat tabBarHeight = 30.0;
+        CGFloat tabBarHeight = 55.0;
     
         tabView =
             [[NSTabView alloc]
@@ -1631,7 +1638,7 @@ double adjustY(int idx)
         leftIndicator =
             [[NSTextField alloc]
                 initWithFrame:
-                    NSMakeRect(0,
+                    NSMakeRect(-3,
                                3,
                                22,
                                tabBarHeight)];
@@ -1646,7 +1653,7 @@ double adjustY(int idx)
                 colorWithAlphaComponent:0.90]];
         [leftIndicator setAlignment:NSTextAlignmentCenter];
         [leftIndicator setFont:
-            [NSFont systemFontOfSize:18.0]];
+            [NSFont systemFontOfSize:14.0]];
         [leftIndicator setTextColor:
             [NSColor secondaryLabelColor]];
         [leftIndicator setAutoresizingMask:0];
@@ -1658,7 +1665,7 @@ double adjustY(int idx)
             [[NSTextField alloc]
                 initWithFrame:
                     NSMakeRect(
-                        tabScrollView.bounds.size.width - 22,
+                        tabScrollView.bounds.size.width - 19,
                         3,
                         22,
                         tabBarHeight)];
@@ -1673,7 +1680,7 @@ double adjustY(int idx)
                 colorWithAlphaComponent:0.90]];
         [rightIndicator setAlignment:NSTextAlignmentCenter];
         [rightIndicator setFont:
-            [NSFont systemFontOfSize:18.0]];
+            [NSFont systemFontOfSize:14.0]];
         [rightIndicator setTextColor:
             [NSColor secondaryLabelColor]];
         [rightIndicator setAutoresizingMask:
@@ -1956,7 +1963,7 @@ double adjustY(int idx)
 
     [tabBar removeArrangedSubview:button];
     [button removeFromSuperview];
-
+    [self updateTabBarWidth];
     [self updateTabLabels];
 }
 

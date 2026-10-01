@@ -19,6 +19,8 @@
 #define OCTAVE_SIZE 4
 #define KEYBOARD_SIZE 12*5
 
+#define SYSEX_END   0xF7
+
 
 #define MAX_DUMP_SIZE 256
 
