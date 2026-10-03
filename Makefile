@@ -21,18 +21,31 @@ C_SOURCES = \
 OBJC_SOURCES = \
 	src/main.m \
 	src/gui.m \
-	src/sysex_window.m
+	src/sysex_window.m \
+	src/sysex_tab_button.m \
+	src/ADSRview.m \
+	src/sysex_document.m \
+	src/sysex_program_view.m \
+	src/sysex_parameters.m \
+	src/bit99_text_field.m
 
 C_OBJECTS = \
 	src/bit99_handler.o \
 	src/bit99_midi.o \
 	src/macos_midi.o \
-	src/bit99_program.o
+	src/bit99_program.o \
 
 OBJC_OBJECTS = \
 	src/main.o \
 	src/gui.o \
-	src/sysex_window.o
+	src/sysex_window.o \
+	src/sysex_tab_button.o \
+	src/ADSRview.o \
+	src/sysex_document.o \
+	src/sysex_program_view.o \
+	src/sysex_parameters.o \
+	src/bit99_text_field.o
+
 
 OBJECTS = $(C_OBJECTS) $(OBJC_OBJECTS)
 
@@ -54,17 +67,12 @@ $(BINARY): $(OBJECTS) Info.plist $(RESOURCES)
 
 	$(CC) $(OBJECTS) -o $(BINARY) $(LDFLAGS)
 
-	$(CC) $(OBJECTS) -o $(BINARY) $(LDFLAGS)
-
 
 src/bit99_handler.o: src/bit99_handler.c src/bit99_handler.h
 	$(CC) $(CFLAGS) -c src/bit99_handler.c -o src/bit99_handler.o
 
 src/bit99_midi.o: src/bit99_midi.c src/bit99_midi.h
 	$(CC) $(CFLAGS) -c src/bit99_midi.c -o src/bit99_midi.o
-
-#src/bit99.o: src/bit99.c src/bit99.h
-#	$(CC) $(CFLAGS) -c src/bit99.c -o src/bit99.o
 
 src/macos_midi.o: src/macos_midi.c src/macos_midi.h
 	$(CC) $(CFLAGS) -c src/macos_midi.c -o src/macos_midi.o
@@ -78,6 +86,23 @@ src/sysex_window.o: src/sysex_window.m src/gui.h src/sysex_window.h
 src/gui.o: src/gui.m src/gui.h src/bit99_handler.h
 	$(CC) $(OBJCFLAGS) -c src/gui.m -o src/gui.o
 
+src/sysex_tab_button.o: src/sysex_tab_button.m src/sysex_tab_button.h
+	$(CC) $(OBJCFLAGS) -c src/sysex_tab_button.m -o src/sysex_tab_button.o
+
+src/ADSRview.o: src/ADSRview.m src/ADSRview.h
+	$(CC) $(OBJCFLAGS) -c src/ADSRview.m -o src/ADSRview.o
+
+src/sysex_document.o: src/sysex_document.m src/sysex_document.h
+	$(CC) $(OBJCFLAGS) -c src/sysex_document.m -o src/sysex_document.o
+
+src/sysex_program_view.o: src/sysex_program_view.m src/sysex_program_view.h
+	$(CC) $(OBJCFLAGS) -c src/sysex_program_view.m -o src/sysex_program_view.o
+
+src/sysex_parameters.o: src/sysex_parameters.m src/sysex_parameters.h
+	$(CC) $(OBJCFLAGS) -c src/sysex_parameters.m -o src/sysex_parameters.o
+
+src/bit99_text_field.o: src/bit99_text_field.m src/bit99_text_field.h
+	$(CC) $(OBJCFLAGS) -c src/bit99_text_field.m -o src/bit99_text_field.o
 
 
 

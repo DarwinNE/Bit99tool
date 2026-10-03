@@ -3,6 +3,9 @@
 
 #include "bit99_program.h"
 
+#define SYSEX_MAX_DOCUMENTS 99
+
+
 int send_bitmap(unsigned char *bitmap, const int program);
 void sysex_editor_open_bitmap(const unsigned char *bitmap,
                               const int size,
