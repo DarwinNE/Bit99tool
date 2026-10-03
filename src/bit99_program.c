@@ -230,10 +230,10 @@ void bit99_process_byte(int ch)
                 state=IDLE;
                 gui_printf("Bitmap detected (size=%d)\n", dump_pointer);
                 if(dump_pointer==74) {
-                    bit99_decode_program_bitmap74();
+                    //bit99_decode_program_bitmap74();
                     bitmap_size=BITMAP_74;
                 } else if(dump_pointer==14) {
-                    bit99_decode_split_double_bitmap();
+                    //bit99_decode_split_double_bitmap();
                     bitmap_size=BITMAP_14;
                 } else {
                     gui_printf("Size of the bit map does not correspond"

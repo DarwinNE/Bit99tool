@@ -4,18 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#import <objc/runtime.h>
 
 #include "sysex_window.h"
-#include "bit99_program.h"
-#include "bit99_midi.h"
-
-#include "gui.h"
 #include "sysex_tab_button.h"
-#include "ADSRview.h"
 #include "sysex_document.h"
 #include "sysex_program_view.h"
-
 #include "dimensions.h"
 
 @interface SysexEditorWindowController :
@@ -136,8 +129,6 @@ static SysexEditorWindowController *editorController = nil;
         
         [tabScrollView setDocumentView:tabBar];
         
-        [contentView addSubview:tabView];
-        [contentView addSubview:tabScrollView];
         NSBox *separator =
             [[NSBox alloc]
                 initWithFrame:
@@ -203,16 +194,9 @@ static SysexEditorWindowController *editorController = nil;
             [NSFont systemFontOfSize:14.0]];
         [rightIndicator setTextColor:
             [NSColor secondaryLabelColor]];
-        [rightIndicator setAutoresizingMask:
-            NSViewMinXMargin];
-        [rightIndicator setHidden:YES];
-        
+
         [tabScrollView addSubview:rightIndicator];
-        
-        [rightIndicator setAutoresizingMask:
-            NSViewMinXMargin |
-            NSViewMinYMargin];
-        
+                
         [leftIndicator setAutoresizingMask:
             NSViewMinYMargin];
         
@@ -254,6 +238,7 @@ static SysexEditorWindowController *editorController = nil;
                     3)];
 }
 
+/* Slow!
 - (void)updateTabBarWidth
 {
     CGFloat width =
@@ -264,6 +249,33 @@ static SysexEditorWindowController *editorController = nil;
 
     if (width < [tabScrollView contentSize].width)
         width = [tabScrollView contentSize].width;
+
+    [tabBar setFrameSize:
+        NSMakeSize(width, height)];
+
+    [self updateTabScrollIndicators];
+}
+*/
+
+- (void)updateTabBarWidth
+{
+    CGFloat width = 0.0;
+
+    for (NSView *view in [tabBar arrangedSubviews])
+        width += [view intrinsicContentSize].width;
+
+    width += MAX(0,
+        ([tabBar arrangedSubviews].count - 1) *
+        [tabBar spacing]);
+
+    CGFloat visibleWidth =
+        [tabScrollView contentSize].width;
+
+    if (width < visibleWidth)
+        width = visibleWidth;
+
+    CGFloat height =
+        [tabScrollView contentSize].height;
 
     [tabBar setFrameSize:
         NSMakeSize(width, height)];
@@ -409,10 +421,8 @@ static SysexEditorWindowController *editorController = nil;
                          target:self];
     
     [tabBar addArrangedSubview:button];
-    [self updateTabBarWidth];
-
     
-    [tabView selectTabViewItem:item];
+    //[tabView selectTabViewItem:item];   // SLOW!!!
     [tabScrollView
         reflectScrolledClipView:
             [tabScrollView contentView]];
