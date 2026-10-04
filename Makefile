@@ -12,7 +12,8 @@ BINARY = $(APP)/Contents/MacOS/Bit99Tool
 RESOURCE_DIR = $(APP)/Contents/Resources
 RESOURCES = res/bit_logo.png \
     res/dseg7-classic-latin-300-normal.ttf \
-    res/LICENSE_dseg7
+    res/LICENSE_dseg7 \
+    res/app_icon.icns
 
 
 C_SOURCES = \
@@ -64,6 +65,7 @@ $(BINARY): $(OBJECTS) Info.plist $(RESOURCES)
 	@cp res/bit_logo.png $(RESOURCE_DIR)/
 	@cp res/dseg7-classic-latin-300-normal.ttf $(RESOURCE_DIR)/
 	@cp res/LICENSE_dseg7 $(RESOURCE_DIR)/
+	@cp res/app_icon.icns $(RESOURCE_DIR)/
 
 	$(CC) $(OBJECTS) -o $(BINARY) $(LDFLAGS)
 

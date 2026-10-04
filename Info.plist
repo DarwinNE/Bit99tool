@@ -29,6 +29,9 @@
 
     <key>NSHumanReadableCopyright</key>
     <string>© 2026 Davide Bucci</string>
+    
+    <key>CFBundleIconFile</key>
+    <string>app_icon.icns</string>
 
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
