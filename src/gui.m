@@ -501,7 +501,7 @@
         return;
 
 
-    bit99_send_file_h(&config, buffer);
+    bit99_send_file_h(buffer);
 }
 
 - (void)interpretFile:(id)sender
@@ -527,7 +527,7 @@
         return;
 
 
-    bit99_interpret_file_h(&config, buffer);
+    bit99_interpret_file_h(buffer);
 }
 
 

@@ -13,7 +13,7 @@ FILE *fout;
 void bit99_init(BitConfig *config)
 {
     midi_enumerate();
-    midi_init_in(1,0);
+    midi_init_in(0);
     //if(config->destination ==-1) {
         config->destination = midi_get_number_of_destinations()-1;
     //}
@@ -85,21 +85,7 @@ void bit99_receive_program_h(BitConfig *config, int pr)
 void bit99_receive_all_h(BitConfig *config)
 {
     int problems=0;
-    /*
-    for(int pr=1; pr<100; ++pr) {
-        fout = fopen("/Users/davidebucci/Documents/Synchronized/Music Instruments/Crumar BIT 99/bit99_presets/tools/midi_tools_macos/temp.syx", "w");
-        if (fout==NULL) {
-            gui_printf("Can not create temp file.\n");
-            return;
-        }
-        bit99_set_output_file(fout);
-        problems = bit99_program_dump(config->model, pr);
-        fclose(fout);
-        fout=NULL;
-        bit99_set_output_file(NULL);
-        if (problems==0 && config->interpret)
-            bit99_sysex("/Users/davidebucci/Documents/Synchronized/Music Instruments/Crumar BIT 99/bit99_presets/tools/midi_tools_macos/temp.syx");    
-    }*/
+
     if(check_file_name(config, -1)==0) {
         bit99_set_output_file(fout);
         problems = bit99_program_dump_all(config->model);
@@ -114,13 +100,13 @@ void bit99_receive_all_h(BitConfig *config)
     if (problems==0) gui_printf("Done\n\n");
 }
 
-void bit99_interpret_file_h(BitConfig *config, const char *filename)
+void bit99_interpret_file_h(const char *filename)
 {
     gui_printf_bold("Interpret file: %s\n", filename);
     bit99_sysex(filename);
 }
 
-void bit99_send_file_h(BitConfig *config, const char *filename)
+void bit99_send_file_h(const char *filename)
 {
     gui_printf_bold("Send file: %s\n", filename);
     bit99_send_file(filename);

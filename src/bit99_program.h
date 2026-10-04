@@ -97,7 +97,7 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
                         int index,
                         const Bit99ParameterValue *value);
 
-int bit99_sysex(char *fname);
+int bit99_sysex(const char *fname);
 void bit99_decode_program_bitmap74(void);
 void bit99_decode_split_double_bitmap(void);
 int save_bitmap(unsigned char *bitmap, const int program);

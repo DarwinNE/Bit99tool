@@ -46,7 +46,7 @@ void octaveChanged(id sender)
         return;
     }
 
-    int valuep = [sender intValue];
+//    int valuep = [sender intValue];
 
     int octave = (int)[sender indexOfSelectedItem];
 

@@ -8,8 +8,7 @@ int bit99_program_dump(BitModel, unsigned int program);
 int bit99_program_dump_all(BitModel);
 void bit99_set_callback(void);
 void bit99_set_output_file(FILE *f);
-int bit99_send_file(char *fn);
+int bit99_send_file(const char *fn);
 int bit99_send_file_f(FILE *fin);
-
 
 #endif

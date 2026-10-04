@@ -28,6 +28,9 @@ void midi_set_user_callback(void (*cb)(unsigned char*, int))
 static void midi_callback(const MIDIPacketList *pktlist, void *refCon,
     void *connRefCon)
 {
+    (void)refCon;           // Silence unused warnings.
+    (void)connRefCon;
+
     if(user_callback==NULL) {
         fprintf(stderr, "Received data, but no callback is defined.\n");
         return;
@@ -47,7 +50,7 @@ Byte buffer[1024];
 int midi_send(unsigned char *message, int size)
 {
 
-    if(size>sizeof(buffer)) {
+    if(size>(int)sizeof(buffer)) {
         fprintf(stderr, "Error: MIDI message too large.\n");
         return 1;
     }
@@ -97,7 +100,7 @@ int midi_get_number_of_destinations(void)
 
 char *midi_get_description_destination(int n, char *buffer, int bufsize)
 {
-    if(n<0 || n>=MIDIGetNumberOfDestinations())
+    if(n<0 || (unsigned long)n>=MIDIGetNumberOfDestinations())
         return NULL;
 
     CFStringRef pname;
@@ -109,7 +112,7 @@ char *midi_get_description_destination(int n, char *buffer, int bufsize)
     return buffer;
 }
 
-int midi_init_in(int destination, int channel)
+int midi_init_in(int channel)
 {
     int i;
     // find the number of inputs
@@ -151,20 +154,19 @@ int midi_init_out(int destination, int channel)
     MIDIClientRef client;
     MIDIClientCreate(CFSTR("MIDI CRUMAR BIT99"), NULL, NULL, &client);
 
-    MIDIPortRef inPort;
+    //MIDIPortRef inPort;
     MIDIOutputPortCreate(client, CFSTR("Output port"), &gOutPort);
 
     gOutChannel=channel;
     midi_set_destination(destination);
 
-    CFStringRef pname, pmanuf, pmodel;
-    char name[64], manuf[64], model[64];
+    CFStringRef pname;
+    char name[64];
     if (gDest != 0) {
         MIDIObjectGetStringProperty(gDest, kMIDIPropertyName, &pname);
         CFStringGetCString(pname, name, sizeof(name), 0);
         printf("Output to channel %d of %s\n", gOutChannel + 1, name);
         CFRelease(pname);
-        //wait_for_key();
     } else {
         printf("No MIDI destinations present\n");
         return 1;

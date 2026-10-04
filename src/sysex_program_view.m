@@ -55,6 +55,7 @@ int send_bitmap(unsigned char *bitmap, const int program)
     }
     if((r=save_bitmap_f(f, bitmap, program))) {
         gui_printf("Problems writing the temp file.\n");
+        return 1;
     } else {
             fclose(f);
 
@@ -97,11 +98,11 @@ static NSTextField *createLabel(NSString *text, NSRect frame)
 static void setupDSEG7Popup(NSPopUpButton *popup)
 {
 
-    CGFloat size = [[popup font] pointSize];
+    //CGFloat size = [[popup font] pointSize];
 
     //NSFont *font = [NSFont fontWithName:@"DSEG7 Classic" size:size];
-    NSColor *color = [NSColor redColor];
-    NSColor *back = [NSColor blackColor];
+    //NSColor *color = [NSColor redColor];
+    //NSColor *back = [NSColor blackColor];
 
     //[popup setFont:font];
 
@@ -185,7 +186,7 @@ static void setupDSEG7Field(NSTextField *field)
 -(void)programNumberChanged:(id)sender
 {
     NSDictionary *info = getParameterInfo(sender);
-    SysexDocument *document =
+    SysexDocument *doc =
         (SysexDocument *)[info[@"document"] pointerValue];
 
     int valuep = [sender intValue];
@@ -197,10 +198,10 @@ static void setupDSEG7Field(NSTextField *field)
         valuep = 99;
 
     [sender setIntValue:valuep];
-    document->programNumber=valuep;
+    doc->programNumber=valuep;
     
     gui_printf("programNumberChanged: %d\n",
-           document->programNumber);
+           doc->programNumber);
 
     
     [[NSNotificationCenter defaultCenter]
@@ -213,10 +214,10 @@ static void setupDSEG7Field(NSTextField *field)
 {
     gui_printf("File name changed!\n");
 
-    NSDictionary *info = getParameterInfo(sender);
+//    NSDictionary *info = getParameterInfo(sender);
 
-    SysexDocument *document =
-        (SysexDocument *)[info[@"document"] pointerValue];
+    /*SysexDocument *document =
+        (SysexDocument *)[info[@"document"] pointerValue];*/
 
     NSString *string = [sender stringValue];
     const char *fileName = [string UTF8String];

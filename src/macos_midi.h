@@ -3,7 +3,7 @@
 
 int midi_enumerate(void);
 int midi_init_out(int destination, int channel);
-int midi_init_in(int destination, int channel);
+int midi_init_in(int channel);
 int midi_send(unsigned char *message, int size);
 void midi_set_user_callback(void (*cb)(unsigned char *, int));
 void midi_sleep_100ms(void);

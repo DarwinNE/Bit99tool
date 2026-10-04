@@ -109,7 +109,7 @@ char* keyboard[KEYBOARD_SIZE]= {
 void bit99_process_byte(int ch)
 {
     int channel=0;
-    char data1, data2, data3, data4;
+    char data1=0, data2=0;
 
 
     switch(state) {
@@ -275,7 +275,7 @@ int open_bitmap(int pp, char *fn)
     return 0;
 }
 
-int bit99_sysex(char *fname)
+int bit99_sysex(const char *fname)
 {
     gui_printf("Processing file: %s\n", fname);
     bitmap_size = 0;
@@ -739,7 +739,6 @@ int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program)
 
     fwrite(endsysx, 1, 2, fout);
 
-    fclose(fout);
     return 0;
 }
 
@@ -748,6 +747,8 @@ int save_bitmap(unsigned char *bitmap, const int program)
     FILE *fout = fopen(file_name, "wb");
     if(fout==NULL)
         return 1;
-    return save_bitmap_f(fout, bitmap, program);
+    int r=save_bitmap_f(fout, bitmap, program);
+    fclose(fout);
+    return r;
 }
 

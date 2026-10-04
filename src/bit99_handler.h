@@ -19,8 +19,8 @@ void bit99_init(BitConfig *config);
 
 void bit99_receive_program_h(BitConfig *config, int pr);
 void bit99_receive_all_h(BitConfig *config);
-void bit99_send_file_h(BitConfig *config, const char *filename);
-void bit99_interpret_file_h(BitConfig *config, const char *filename);
+void bit99_send_file_h(const char *filename);
+void bit99_interpret_file_h(const char *filename);
 
 int check_file_name(BitConfig *config, int pr);
 

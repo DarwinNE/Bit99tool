@@ -30,6 +30,7 @@ int bit99_send_program_change(unsigned int program)
     };
     msg[1]=(program-1) & 0x7F;
     midi_send(msg, sizeof(msg));
+    return 0;
 }
 
 /** Dump a single program via Sysex
@@ -137,7 +138,7 @@ int bit99_send_file_f(FILE *fin)
 
 /** Send a SYSEX file.
 */
-int bit99_send_file(char *fn)
+int bit99_send_file(const char *fn)
 {
     FILE *fin=fopen(fn, "rb");
     bit99_send_file_f(fin);
