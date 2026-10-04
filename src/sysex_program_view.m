@@ -963,7 +963,8 @@ double adjustY(int idx)
                         (NROW+7) * ROW_HEIGHT)];
 
         [vert_separator setBoxType:NSBoxCustom];
-        [vert_separator setBorderType:NSNoBorder];
+        //[vert_separator setBorderType:NSNoBorder];
+        [vert_separator setTransparent:YES];
         [vert_separator setFillColor:[NSColor separatorColor]];
 
         // Add the vertical separator only if needed (i.e. we are using two
