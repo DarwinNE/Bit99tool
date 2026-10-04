@@ -457,7 +457,6 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
 {
     int data;
 
-
     if (bitmap == NULL || value == NULL ||
         index < 0 || index >= BIT99_PROGRAM_PARAMETERS_74) // TODO what if 14?
     {
@@ -495,36 +494,19 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
         case NOTE3:
             data = value->value;
             break;
-
         /*
          * LFO waveforms and VCF inversion.
          */
         case NOTE4:
             data = value->value;
             break;
-
-
         /*
          * DCO waveform flags.
          */
         case NOTE5:
-            data = 0;
-
-            if (value->dco1_triangle)
-                data |= 0x10;
-            if (value->dco1_sawtooth)
-                data |= 0x04;
-            if (value->dco1_pulse)
-                data |= 0x01;
-
-            if (value->dco2_triangle)
-                data |= 0x20;
-            if (value->dco2_sawtooth)
-                data |= 0x08;
-            if (value->dco2_pulse)
-                data |= 0x02;
-
+            data = value->value;
             break;
+    
         case NOTE7:
             data = value->value;
             break;

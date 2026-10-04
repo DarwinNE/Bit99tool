@@ -751,8 +751,8 @@ double adjustY(int idx)
                 };
 
                 const int dco_bits[2][3] = {
-                    { 0x10, 0x04, 0x01 },
-                    { 0x20, 0x08, 0x02 }
+                    { 4, 2, 0 },
+                    { 5, 3, 1 }
                 };
 
                 for (int dco = 0; dco < 2; ++dco) {
@@ -784,7 +784,7 @@ double adjustY(int idx)
                             [NSString stringWithUTF8String:dco_names[j]]];
 
                         [check setState:
-                            (value.value & dco_bits[dco][j])
+                            (value.value & (1 << dco_bits[dco][j]))
                                 ? NSControlStateValueOn
                                 : NSControlStateValueOff];
 
@@ -793,7 +793,7 @@ double adjustY(int idx)
                                 [NSValue valueWithPointer:(
                                     __bridge const void *)document],
                             @"index": @(i),
-                            @"mask": @(dco_bits[dco][j])
+                            @"bit": @(dco_bits[dco][j])
                         };
 
                         setParameterInfo(check, info);
@@ -1016,6 +1016,7 @@ double adjustY(int idx)
 
 - (void)parameterChanged:(id)sender
 {
+    gui_printf("Called parameterChanged action\n");
     parameterChanged(sender);
 
     [self setNeedsDisplay:YES];

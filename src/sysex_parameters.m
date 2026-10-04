@@ -5,6 +5,7 @@
 #include "sysex_parameters.h"
 #include "sysex_document.h"
 
+#include "gui.h"
 
 static char parameterInfoKey;
 
@@ -69,21 +70,15 @@ void parameterChanged(id sender)
     int index = [info[@"index"] intValue];
 
     Bit99ParameterValue value;
-
-    int valuep = [sender intValue];
-
-    if (valuep < 0)
-        valuep = 0;
-    else if (valuep > 63)
-        valuep = 63;
-
-    [sender setIntValue:valuep];
-
+    gui_printf("Called parameterChanged function\n");
     if (bit99_decode_parameter(document->p_bit_desc,
                             document->bitmap, index, &value) != 0)
     {
+        gui_printf("Problem during decoding parameters!\n");
         return;
     }
+
+    gui_printf("Step_size= %d\n",document->p_bit_desc[index].step_size);
 
     /*
      * Normal numerical parameter or detune.
@@ -91,7 +86,14 @@ void parameterChanged(id sender)
     if (document->p_bit_desc[index].step_size > 0 ||
         document->p_bit_desc[index].step_size == NOTE1)
     {
-
+        int valuep = [sender intValue];
+    
+        if (valuep < 0)
+            valuep = 0;
+        else if (valuep > 63)
+            valuep = 63;
+    
+        [sender setIntValue:valuep];
         value.value = [sender intValue];
 
         if (bit99_encode_parameter(document->p_bit_desc,
@@ -122,8 +124,11 @@ void parameterChanged(id sender)
 
     /*
      * Note 3 in the manual, LFO flag byte 1.
+     * Note 5 in the manual, DCO flags.
      */
-    if (document->p_bit_desc[index].step_size == NOTE3) {
+    if (document->p_bit_desc[index].step_size == NOTE3 ||
+        document->p_bit_desc[index].step_size == NOTE5)
+    {
         index = [info[@"index"] intValue];
         int bit   = [info[@"bit"] intValue];
 
@@ -131,17 +136,66 @@ void parameterChanged(id sender)
 
         bit99_decode_parameter(document->p_bit_desc,
                         document->bitmap, index, &value);
+        gui_printf("NOTE3: %d ",value.value);
 
         if ([sender state] == NSControlStateValueOn)
             value.value |= (1 << bit);
         else
             value.value &= ~(1 << bit);
+        gui_printf(" transformed to: %d using bit=%d\n", value.value, bit);
 
         if (bit99_encode_parameter(document->p_bit_desc,
                                 document->bitmap, index, &value) == 0)
         {
             document->modified = YES;
         }
+        return;
+    }
+    
+    /*
+     * Note 4 in the manual.
+     *
+     * LFO waveform and VCF invert.
+     */
+    if (document->p_bit_desc[index].step_size == NOTE4) {
+    
+        Bit99ParameterValue value;
+    
+        bit99_decode_parameter(document->p_bit_desc,
+                        document->bitmap, index, &value);
+    
+        /*
+         * LFO waveform popups.
+         */
+        if ([sender isKindOfClass:[NSPopUpButton class]]) {
+    
+            int mask  = [info[@"mask"] intValue];
+            int shift = [info[@"shift"] intValue];
+            int wave  = (int)[sender indexOfSelectedItem];
+    
+            value.value &= ~(mask << shift);
+            value.value |= (wave & mask) << shift;
+        }
+    
+        /*
+         * VCF invert checkbox.
+         */
+        else if ([sender isKindOfClass:[NSButton class]]) {
+    
+            int mask = [info[@"mask"] intValue];
+    
+            if ([sender state] == NSControlStateValueOn)
+                value.value |= mask;
+            else
+                value.value &= ~mask;
+        }
+    
+        if (bit99_encode_parameter(document->p_bit_desc,
+                                document->bitmap, index, &value) == 0)
+        {
+            document->modified = YES;
+        }
+    
         return;
     }
 
