@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "gui.h"
 #include "sysex_window.h"
@@ -114,14 +115,14 @@ void bit99_process_byte(int ch)
 
     switch(state) {
         case IDLE:
-            if(ch==0xF0) state=SYSEX_START;
+            if(ch==SYSEX_ST) state=SYSEX_START;
             break;
         case EOX:
             if(ch!=SYSEX_END) gui_printf( "The SYSEX EOX is missing.\n");
             state=IDLE;
             break;
         case SYSEX_START:
-            if(ch!=0x25) {
+            if(ch!=CRUMAR_BIT) {
                 gui_printf( "Error: Sysex ID is not 0x25 (Crumar BIT)\n");
                 state=IDLE;
             } else {
@@ -306,9 +307,6 @@ int bit99_sysex(const char *fname)
     return 0;
 }
 
-
-
-
 /*
  * Return the 12-bit value represented by one parameter in the bitmap.
  *
@@ -317,8 +315,7 @@ int bit99_sysex(const char *fname)
  *     bitmap[2*i]       = low nibble
  *     bitmap[2*i + 1]   = high nibble
  */
-static int
-get_parameter_data(const unsigned char *bitmap, int index)
+static int get_parameter_data(const unsigned char *bitmap, int index)
 {
     return bitmap[2 * index] |
            (bitmap[2 * index + 1] << 4);
@@ -328,8 +325,7 @@ get_parameter_data(const unsigned char *bitmap, int index)
 /*
  * Store a 8-bit parameter value as two nibbles.
  */
-static void
-set_parameter_data(unsigned char *bitmap, int index, int data)
+static void set_parameter_data(unsigned char *bitmap, int index, int data)
 {
     bitmap[2 * index]     = data & 0x0f;
     bitmap[2 * index + 1] = (data >> 4) & 0x0f;
@@ -341,8 +337,7 @@ set_parameter_data(unsigned char *bitmap, int index, int data)
 /*
  * Decode one program parameter.
  */
-int
-bit99_decode_parameter(const bit_map *p_bit_desc,
+int bit99_decode_parameter(const bit_map *p_bit_desc,
                        const unsigned char *bitmap,
                        int index,
                        Bit99ParameterValue *result)
@@ -370,7 +365,6 @@ bit99_decode_parameter(const bit_map *p_bit_desc,
             result->value = (data - 0x80) / 2;
         break;
 
-
     /*
      * Note 2:
      * DCO octave/frequency.
@@ -392,7 +386,6 @@ bit99_decode_parameter(const bit_map *p_bit_desc,
         result->value = data;
         break;
 
-
     /*
      * Note 3:
      * LFO control flags.
@@ -405,7 +398,6 @@ bit99_decode_parameter(const bit_map *p_bit_desc,
         result->value = data;
         break;
 
-
     /*
      * Note 4:
      * LFO waveforms and VCF inversion.
@@ -416,7 +408,6 @@ bit99_decode_parameter(const bit_map *p_bit_desc,
         result->vcf_invert = (data & 0x80) != 0;
         result->value = data;
         break;
-
 
     /*
      * Note 5:
@@ -744,11 +735,103 @@ int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program)
 
 int save_bitmap(unsigned char *bitmap, const int program)
 {
+/*
     FILE *fout = fopen(file_name, "wb");
     if(fout==NULL)
         return 1;
     int r=save_bitmap_f(fout, bitmap, program);
     fclose(fout);
     return r;
+    */
+    return save_bitmap_in_a_collection_file(file_name, bitmap, program);
 }
 
+int save_bitmap_in_a_collection_file(
+    const char *filename,
+    unsigned char *bitmap,
+    const int program)
+{
+    #define MAX_FILE_SIZE 20000
+    unsigned char file_buffer[MAX_FILE_SIZE];
+    int i;
+    int pos=0;
+    
+    int size=74;
+    if(program>75)
+        size=14;
+    
+    
+    FILE *fin = fopen(filename, "rb");
+    if(fin==NULL) {
+        if(errno != ENOENT) {
+            gui_printf("Error reading input file %s\n", filename);
+            return 1;
+        }
+    }
+    // Read all the file and keep it in memory.
+    int ch;
+    while(fin && (ch=fgetc(fin))!=EOF) {
+        if(pos>=MAX_FILE_SIZE-100) {
+            gui_printf("Error: file too big.\n");
+            fclose(fin);
+            return 1;
+        }
+        file_buffer[pos++]=ch;
+    }
+    if(fin) {
+        fclose(fin);
+        gui_printf("Stored all the file in memory.\n");
+    } else {
+        gui_printf("Created a new file.\n");
+    }
+    for (i=0; i<pos; ++i) {
+        if(i<pos-5 && file_buffer[i]==SYSEX_ST && 
+            file_buffer[i+1]==CRUMAR_BIT &&
+            file_buffer[i+2]==0x20 &&
+            file_buffer[i+3]==PROG_DUMP &&
+            file_buffer[i+4]==program-1)
+        {
+            gui_printf("Found program %d at position %d in the file.\n",
+                program, i);
+            i+=5;
+
+            if(i+size>=pos || file_buffer[i+size]!=SYSEX_END) {
+                gui_printf("Error: malformed file! I can not overwrite it\n");
+                return 2;
+            }
+            
+            for(int j=0; j<size; ++j) {
+                file_buffer[i+j]=bitmap[j];
+            }
+            file_buffer[i+size]=SYSEX_END;
+            break;
+        }
+    }
+    if(i==pos) {
+        file_buffer[i++]=SYSEX_ST;
+        file_buffer[i++]=CRUMAR_BIT;
+        file_buffer[i++]=0x20;
+        file_buffer[i++]=PROG_DUMP;
+        file_buffer[i++]=program-1;
+
+        for(int j=0; j<size; ++j) {
+            file_buffer[i+j]=bitmap[j];
+        }
+        file_buffer[i+size]=SYSEX_END;
+        pos=i+size+1;
+    }
+    FILE *fout=fopen(filename, "wb");
+    if(fout==NULL) {
+        gui_printf("Error writing output file %s\n", filename);
+        return 1;
+    }
+    int ret=0;
+    if(fwrite(file_buffer, sizeof(unsigned char), pos, fout)!=
+        (unsigned long)pos)
+    {
+        gui_printf("Error writing file!\n");
+        ret=1;
+    } 
+    fclose(fout);
+    return ret;
+}

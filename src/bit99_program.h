@@ -20,6 +20,9 @@
 #define KEYBOARD_SIZE 12*5
 
 #define SYSEX_END   0xF7
+#define SYSEX_ST    0xF0
+#define CRUMAR_BIT  0x25
+#define PROG_DUMP   0x07
 
 
 #define MAX_DUMP_SIZE 256
@@ -102,4 +105,6 @@ void bit99_decode_program_bitmap74(void);
 void bit99_decode_split_double_bitmap(void);
 int save_bitmap(unsigned char *bitmap, const int program);
 int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program);
+int save_bitmap_in_a_collection_file(const char *filename,
+    unsigned char *bitmap, const int program);
 #endif
