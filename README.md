@@ -6,7 +6,9 @@ Bit99Tool provides tools for working with Bit 99 SysEx data and MIDI, including 
 
 The project is written in **C and Objective-C** using native macOS Cocoa and CoreMIDI APIs. It has no external runtime dependencies.
 
-![Icon](screenshots/screenshot_icon.png)
+<p align="center">
+  <img src="resources/bit99_icon.png" width="400">
+</p>
 
 ## Features
 
