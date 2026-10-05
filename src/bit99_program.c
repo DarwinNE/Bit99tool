@@ -273,6 +273,7 @@ int open_bitmap(int pp, char *fn)
         gui_printf("The file does not contain a program.\n");
         return 1;
     }
+    sysex_select_last_added_tab();
     return 0;
 }
 
@@ -299,10 +300,7 @@ int bit99_sysex(const char *fname)
         }
     } while(ch != EOF);
 
-    //open_bitmap(program_number, file_name);
     fclose(fin);
-
-    
         
     return 0;
 }

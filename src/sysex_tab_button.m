@@ -33,12 +33,15 @@
 {
     NSRect r = NSInsetRect(self.bounds, 0.5, 0.5);
 
-    NSColor *accent =
+   /* NSColor *accent =
         [NSColor colorWithCalibratedRed:0.0
                                   green:0.65
                                    blue:0.60
-                                  alpha:1.0];
-
+                                  alpha:1.0];*/
+    NSColor *accent = [NSColor colorWithRed:0.01
+                                     green:0.52
+                                      blue:1.00
+                                     alpha:1.00];
     NSColor *background =
         [NSColor windowBackgroundColor];
     

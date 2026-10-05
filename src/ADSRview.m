@@ -119,7 +119,7 @@
 
     [color setStroke];
 
-    [path setLineWidth:1.5];
+    [path setLineWidth:3.5];
     [path stroke];
 }
 

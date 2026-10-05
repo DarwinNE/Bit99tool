@@ -14,4 +14,6 @@ void sysex_editor_open_bitmap(const unsigned char *bitmap,
                               const int number_of_elements, 
                               const int programNumber,
                               const char *filename);
+void sysex_select_last_added_tab(void);
+
 #endif

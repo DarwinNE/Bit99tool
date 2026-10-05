@@ -60,7 +60,6 @@ static SysexEditorWindowController *editorController = nil;
     self = [super initWithWindow:window];
 
     if (self) {
-    
         [window setTitle:@"Bit 99 SysEx Editor"];
     
         NSView *contentView = [window contentView];
@@ -103,6 +102,7 @@ static SysexEditorWindowController *editorController = nil;
         [tabScrollView setAutoresizingMask:
             NSViewWidthSizable |
             NSViewMinYMargin];
+
         
         [tabScrollView setPostsFrameChangedNotifications:YES];
         
@@ -219,6 +219,45 @@ static SysexEditorWindowController *editorController = nil;
     [self updateTabScrollIndicators];
 }
 
+- (SysexDocument *)documentForFilename:(NSString *)filename
+{
+    NSString *path =
+        [[[filename stringByStandardizingPath]
+            stringByResolvingSymlinksInPath]
+            stringByStandardizingPath];
+
+    for (int i = 0; i < documentCount; i++)
+    {
+        SysexDocument *document = documents[i];
+
+        if (!document->filename)
+            continue;
+
+        NSString *documentPath =
+            [[[document->filename
+                stringByStandardizingPath]
+                stringByResolvingSymlinksInPath]
+                stringByStandardizingPath];
+
+        if ([documentPath isEqualToString:path])
+            return document;
+    }
+
+    return nil;
+}
+
+- (void)selectDocument:(SysexDocument *)document
+{
+    for (NSTabViewItem *item in [tabView tabViewItems])
+    {
+        if ([item identifier] == document)
+        {
+            [tabView selectTabViewItem:item];
+            return;
+        }
+    }
+}
+
 - (void)updateTabScrollIndicators
 {
     NSRect visible =
@@ -237,25 +276,6 @@ static SysexEditorWindowController *editorController = nil;
         NSMakePoint(NSWidth(tabScrollView.bounds) - 19,
                     3)];
 }
-
-/* Slow!
-- (void)updateTabBarWidth
-{
-    CGFloat width =
-        [tabBar fittingSize].width;
-
-    CGFloat height =
-        [tabScrollView contentSize].height;
-
-    if (width < [tabScrollView contentSize].width)
-        width = [tabScrollView contentSize].width;
-
-    [tabBar setFrameSize:
-        NSMakeSize(width, height)];
-
-    [self updateTabScrollIndicators];
-}
-*/
 
 - (void)updateTabBarWidth
 {
@@ -361,12 +381,19 @@ static SysexEditorWindowController *editorController = nil;
 
 - (void)addDocument:(SysexDocument *)document
 {
+    SysexDocument *existing =
+        [self documentForFilename:document->filename];
+
+    if (existing)
+    {
+        [self selectDocument:existing];
+        return;
+    }
+
     if (documentCount >= SYSEX_MAX_DOCUMENTS)
         return;
 
-
     documents[documentCount++] = document;
-
 
     NSTabViewItem *item =
         [[NSTabViewItem alloc]
@@ -384,7 +411,6 @@ static SysexEditorWindowController *editorController = nil;
     NSRect contentFrame =
         [tabView contentRect];
 
-
     NSScrollView *scroll =
         [[NSScrollView alloc]
             initWithFrame:contentFrame];
@@ -392,12 +418,10 @@ static SysexEditorWindowController *editorController = nil;
     [scroll setHasVerticalScroller:YES];
     [scroll setHasHorizontalScroller:YES];
 
-
     CGFloat contentHeight =
         TOP_MARGIN +
         document->number_of_elements * ROW_HEIGHT +
         TOP_MARGIN;
-
 
     NSView *view =
         [[SysexProgramView alloc]
@@ -407,7 +431,6 @@ static SysexEditorWindowController *editorController = nil;
                            contentFrame.size.width,
                            contentHeight)
             document:document];
-
 
     [scroll setDocumentView:view];
 
@@ -419,17 +442,18 @@ static SysexEditorWindowController *editorController = nil;
         [[SysexTabButton alloc]
             initWithTabViewItem:item
                          target:self];
-    
+
     [tabBar addArrangedSubview:button];
-    
+
     //[tabView selectTabViewItem:item];   // SLOW!!!
     [tabScrollView
         reflectScrolledClipView:
             [tabScrollView contentView]];
+
     [self updateTabBarWidth];
 
     [tabBar scrollRectToVisible:[button frame]];
-    
+
     [self updateTabLabels];
 }
 
@@ -500,7 +524,26 @@ static SysexEditorWindowController *editorController = nil;
     [self updateTabLabels];
 }
 
+- (void)selectLastAddedTab
+{
+    if (documentCount == 0)
+        return;
+
+    SysexDocument *document =
+        documents[documentCount - 1];
+
+    [self selectDocument:document];
+}
+
 @end
+
+void sysex_select_last_added_tab(void)
+{
+    if(editorController == nil)
+        return;
+
+    [editorController selectLastAddedTab];
+}
 
 void sysex_editor_open_bitmap(const unsigned char *bitmap,
                               const int size,
