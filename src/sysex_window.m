@@ -45,7 +45,7 @@ static SysexEditorWindowController *editorController = nil;
 - (id)init
 {
     NSRect frame =
-        NSMakeRect(0, 0, 850, 750);
+        NSMakeRect(0, 0, 1250, 1050);
 
     NSWindow *window =
         [[NSWindow alloc]
@@ -56,6 +56,8 @@ static SysexEditorWindowController *editorController = nil;
                           NSWindowStyleMaskResizable
                         backing:NSBackingStoreBuffered
                           defer:NO];
+    
+    [window setMaxSize:NSMakeSize(1250.0, 1050.0)];
 
     self = [super initWithWindow:window];
 
