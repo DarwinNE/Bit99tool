@@ -962,6 +962,7 @@ double adjustY(int idx)
                         1,
                         (NROW+7) * ROW_HEIGHT)];
 
+
         [vert_separator setBoxType:NSBoxCustom];
         [vert_separator setTransparent:YES];
         [vert_separator setFillColor:[NSColor separatorColor]];
@@ -970,6 +971,7 @@ double adjustY(int idx)
         // columns).
         if(document->number_of_elements>NROW)
             [self addSubview:vert_separator];
+        
 
         if (y<min_y)
             min_y=y;
@@ -978,7 +980,8 @@ double adjustY(int idx)
 
         CGFloat contentHeight = frame.size.height - min_y;
         CGFloat dy = contentHeight - frame.size.height;
-
+        CGFloat height = frame.size.height;
+                
         [self setFrameSize: NSMakeSize(totalwidth, contentHeight)];
 
         for (NSView *view in [self subviews]) {
@@ -987,6 +990,7 @@ double adjustY(int idx)
             [view setFrame:r];
         }
         [self setFrameSize:NSMakeSize(totalwidth, contentHeight)];
+
     }
     return self;
 }

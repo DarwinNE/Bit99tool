@@ -8,10 +8,10 @@
 @interface ADSRView : NSView
 
 - (void)setDocument:(SysexDocument *)document
-            attack:(CGFloat)attack
-            decay:(CGFloat)decay
-          sustain:(CGFloat)sustain
-          release:(CGFloat)release;
+             attack:(CGFloat)attack
+              decay:(CGFloat)decay
+            sustain:(CGFloat)sustain
+            release:(CGFloat)release;
 
 @end
 

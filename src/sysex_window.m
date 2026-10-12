@@ -12,7 +12,7 @@
 #include "dimensions.h"
 
 @interface SysexEditorWindowController :
-    NSWindowController <NSTabViewDelegate>
+    NSWindowController <NSTabViewDelegate, NSWindowDelegate>
 {
     NSTabView *tabView;
     NSStackView *tabBar;
@@ -63,7 +63,8 @@ static SysexEditorWindowController *editorController = nil;
 
     if (self) {
         [window setTitle:@"Bit 99 SysEx Editor"];
-    
+        [window setDelegate:self];
+
         NSView *contentView = [window contentView];
         NSRect contentFrame = [contentView bounds];
     
@@ -214,6 +215,52 @@ static SysexEditorWindowController *editorController = nil;
 
     }
     return self;
+}
+
+
+- (void)windowWillClose:(NSNotification *)notification
+{
+    /*
+     * Remove all tab buttons.
+     */
+    for (NSView *view in
+         [[tabBar arrangedSubviews] copy])
+    {
+        [tabBar removeArrangedSubview:view];
+        [view removeFromSuperview];
+    }
+
+    /*
+     * Remove all tab view items.
+     */
+    for (NSTabViewItem *item in
+         [[tabView tabViewItems] copy])
+    {
+        [tabView removeTabViewItem:item];
+    }
+
+    /*
+     * Clear the document array.
+     */
+    for (int i = 0; i < documentCount; i++)
+        documents[i] = nil;
+
+    documentCount = 0;
+
+    /*
+     * Reset the tab bar width and scroll position.
+     */
+    [tabBar setFrameSize:
+        NSMakeSize(tabScrollView.contentSize.width,
+                   tabScrollView.contentSize.height)];
+
+    [tabScrollView.contentView
+        scrollToPoint:NSMakePoint(0, 0)];
+
+    [tabScrollView reflectScrolledClipView:
+        tabScrollView.contentView];
+
+    [self updateTabScrollIndicators];
 }
 
 - (void)tabScrollViewFrameDidChange:(NSNotification *)notification

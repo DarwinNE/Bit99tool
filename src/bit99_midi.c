@@ -103,17 +103,269 @@ static void bit99_callback(unsigned char *data, int len)
         fwrite(data, sizeof(unsigned char), len, fout);
     }
     if(fout==NULL) {
-        gui_printf("MIDI RECEIVED:");
+        gui_printf("RECEIVED: ");
     }
     for (int i = 0; i < len; ++i) {
-        if(fout==NULL)
+        if(fout==NULL) {
+            if(!interpret_MIDI(data, len))
+                break;
             gui_printf("0x%X ", data[i]);
+        }
         if(data[i]==EOX) {
             sysex_EOX_received=true;
         }
     }
     if(fout==NULL)
         gui_printf("\n");
+}
+
+extern char* key[];
+
+void print_key(unsigned char v)
+{
+    unsigned char p=v-12;
+    unsigned char octave = p/12;
+    unsigned char k=p-octave*12;
+    
+    gui_printf("%s%d",key[k],octave);
+}
+
+/*
+ * Interpret the code of the controller. Follow the Tauntek firmware table.
+ */
+void interpret_controllers(unsigned char v)
+{
+    switch(v) {
+        case 1:
+            gui_printf("Mod wheel");
+            break;
+        case 7:
+            gui_printf("Patch volume");
+            break;
+
+        case 14:
+            gui_printf("DCO1 Octave");
+            break;
+        case 15:
+            gui_printf("DCO1 Freq. offset");
+            break;
+        case 16:
+            gui_printf("DCO1 Tri. Wave");
+            break;
+        case 17:
+            gui_printf("DCO1 Saw. Wave");
+            break;
+        case 18:
+            gui_printf("DCO1 Pulse Wave");
+            break;
+        case 19:
+            gui_printf("DCO1 Pulse Width");
+            break;
+        case 20:
+            gui_printf("DCO1 Dyn PW");
+            break;
+        
+        case 21:
+            gui_printf("DCO2 Octave");
+            break;
+        case 22:
+            gui_printf("DCO2 Freq. offset");
+            break;
+        case 23:
+            gui_printf("DCO2 Tri. Wave");
+            break;
+        case 24:
+            gui_printf("DCO2 Saw. Wave");
+            break;
+        case 25:
+            gui_printf("DCO2 Pulse Wave");
+            break;
+        case 26:
+            gui_printf("DCO2 Pulse Width");
+            break;
+        case 27:
+            gui_printf("DCO2 Dyn PW");
+            break;
+            
+        case 28:
+            gui_printf("Detune");
+            break;
+        
+        case 29:
+            gui_printf("Noise Level");
+            break;
+            
+        case 30:
+            gui_printf("VCF Attack");
+            break;
+        case 31:
+            gui_printf("VCF Dyn Attack");
+            break;
+        case 32:
+            gui_printf("VCF Decay");
+            break;
+        case 33:
+            gui_printf("VCF Sustain");
+            break;
+        case 34:
+            gui_printf("VCF Release");
+            break;
+        case 35:
+            gui_printf("VCF Env Amt");
+            break;
+        case 36:
+            gui_printf("VCF Dyn Env Amt");
+            break;
+        case 37:
+            gui_printf("VCF Env Polarity");
+            break;
+        case 38:
+            gui_printf("VCF Key tracking");
+            break;    
+        
+        case 39:
+            gui_printf("VCA Dyn Attack");
+            break;  
+        case 40:
+            gui_printf("VCA Decay");
+            break;  
+        case 41:
+            gui_printf("VCA Sustain");
+            break;  
+        case 42:
+            gui_printf("VCA Dyn Env Amt");
+            break; 
+        
+        case 43:
+            gui_printf("LFO1 mods DCO1");
+            break;  
+        case 44:
+            gui_printf("LFO1 mods DCO2");
+            break;  
+        case 45:
+            gui_printf("LFO1 mods VCF");
+            break;  
+        case 46:
+            gui_printf("LFO1 mods VCA");
+            break;
+        case 47:
+            gui_printf("LFO1 waveform");
+            break;
+        
+        case 48:
+            gui_printf("LFO1 rate");
+            break;
+        case 49:
+            gui_printf("LFO1 dynamic rate");
+            break;
+        case 50:
+            gui_printf("LFO1 delay");
+            break;
+        case 51:
+            gui_printf("LFO1 depth");
+            break;
+        
+        case 52:
+            gui_printf("LFO2 mods DCO1");
+            break;  
+        case 53:
+            gui_printf("LFO2 mods DCO2");
+            break;  
+        case 54:
+            gui_printf("LFO2 mods VCF");
+            break;  
+        case 55:
+            gui_printf("LFO2 mods VCA");
+            break;
+        case 56:
+            gui_printf("LFO2 waveform");
+            break;
+        
+        case 57:
+            gui_printf("LFO2 rate");
+            break;
+        case 58:
+            gui_printf("LFO2 dynamic rate");
+            break;
+        case 59:
+            gui_printf("LFO2 delay");
+            break;
+        case 60:
+            gui_printf("LFO2 depth");
+            break;
+        
+        
+        case 61:
+            gui_printf("LFO Wheel Amt");
+            break;
+        
+        case 64:
+            gui_printf("Sustain");
+            break;
+        
+        case 71:
+            gui_printf("VCF Resonance");
+            break;
+        case 72:
+            gui_printf("VCF Release");
+            break;
+        case 73:
+            gui_printf("VCF Attack");
+            break;
+        case 74:
+            gui_printf("VCF Cutoff");
+            break;
+        
+        case 123:
+            gui_printf("All notes off");
+            break;
+        
+        default:
+            break;
+    }
+}
+
+int interpret_MIDI(unsigned char *data, int len)
+{
+    int i=0;
+    switch(data[i]) {
+        case MIDI_NOTE_ON:
+            if(len>=3) {
+                gui_printf("NOTE ON  %d (", data[i+1]);
+                print_key(data[i+1]);
+                gui_printf("), velocity %d ", data[i+2]);
+                if(data[i+2]==0) 
+                    gui_printf(" --> OFF");
+            }
+            break;
+        case MIDI_NOTE_OFF:
+            if(len>=3) {
+                gui_printf("NOTE OFF %d (", data[i+1]);
+                print_key(data[i+1]);
+                gui_printf("), velocity %d ", data[i+2]);
+            }
+            break;
+        case MIDI_CONTROL:
+            if(len>=3) {
+                gui_printf("CONTROL %d (",data[i+1]);
+                interpret_controllers(data[i+1]);
+                gui_printf(") %d",data[i+2]);
+            }
+            break;
+        case MIDI_PITCH_WH:
+            if(len>=3) {
+                gui_printf("PITCH WHEEL %d, %d",data[i+1],data[i+2]);
+            }
+            break;
+        case MIDI_PROGRAM:
+            if(len>=2) {
+                gui_printf("PROGRAM CHANGE %d",data[i+1]+1);
+            }
+            break;
+        default:
+            return 1;
+    }
+    return 0;
 }
 
 /** Send a SYSEX file.
