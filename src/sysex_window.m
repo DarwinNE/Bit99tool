@@ -263,6 +263,43 @@ static SysexEditorWindowController *editorController = nil;
     [self updateTabScrollIndicators];
 }
 
+
+- (BOOL)windowShouldClose:(NSWindow *)sender
+{
+    BOOL hasUnsavedChanges = NO;
+
+    for (int i = 0; i < documentCount; i++)
+    {
+        if (documents[i]->modified)
+        {
+            hasUnsavedChanges = YES;
+            break;
+        }
+    }
+
+    if (!hasUnsavedChanges)
+        return YES;
+
+    NSAlert *alert = [[NSAlert alloc] init];
+
+    [alert setMessageText:
+        @"There are unsaved changes"];
+
+    [alert setInformativeText:
+        @"Closing this window will discard all unsaved changes. "
+         "Do you want to continue?"];
+
+    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:@"Discard Changes"];
+
+    [alert setAlertStyle:NSAlertStyleWarning];
+
+    NSModalResponse response = [alert runModal];
+
+    return response == NSAlertSecondButtonReturn;
+}
+
+
 - (void)tabScrollViewFrameDidChange:(NSNotification *)notification
 {
     [self updateTabScrollIndicators];
