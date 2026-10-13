@@ -127,7 +127,7 @@ void print_key(unsigned char v)
     unsigned char octave = p/12;
     unsigned char k=p-octave*12;
     
-    gui_printf("%s%d",key[k],octave);
+    gui_printf("%2s%d",key[k],octave);
 }
 
 /*
@@ -328,7 +328,9 @@ void interpret_controllers(unsigned char v)
 int interpret_MIDI(unsigned char *data, int len)
 {
     int i=0;
-    switch(data[i]) {
+    int channel=data[i]&0x0F;
+    gui_printf("Channel %d ",channel+1);
+    switch(data[i]&0xF0) {
         case MIDI_NOTE_ON:
             if(len>=3) {
                 gui_printf("NOTE ON  %d (", data[i+1]);
@@ -376,13 +378,13 @@ int bit99_send_file_f(FILE *fin)
     gui_printf("bit99_send_file_f\n");
     // Reading file character by character
     while ((ch = fgetc(fin)) != EOF) {
-        gui_printf("0x%X, ",ch);
+        //gui_printf("0x%X, ",ch);
         if (midi_send((unsigned char *)&ch, 1))
             return 1;
         if(ch==0xF7) {
-            midi_sleep_100ms();
-            gui_printf(".");
-            fflush(stdout);
+            midi_sleep_10ms();
+            //gui_printf(".");
+            //fflush(stdout);
         }
     }
     return 0;

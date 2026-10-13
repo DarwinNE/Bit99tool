@@ -17,6 +17,7 @@ extern char *key[];
 extern char *keyboard[];
 
 extern char file_name[PATH_MAX];
+extern int model;   // bleah!
 
 /*
  * ------------------------------------------------------------------------
@@ -28,7 +29,7 @@ extern char file_name[PATH_MAX];
  * and go back to the one specified so that the settings are taken into
  * account. This is not done if program is less than 1.
  */
-int send_bitmap(unsigned char *bitmap, const int program)
+int send_bitmap(unsigned char *bitmap, const int program, int model)
 {
     NSString *tmpDir = NSTemporaryDirectory();
     int r=0;
@@ -53,7 +54,7 @@ int send_bitmap(unsigned char *bitmap, const int program)
         unlink(template);
         return 1;
     }
-    if((r=save_bitmap_f(f, bitmap, program))) {
+    if((r=save_bitmap_f(f, bitmap, program, model))) {
         gui_printf("Problems writing the temp file.\n");
         return 1;
     } else {
@@ -253,8 +254,6 @@ double adjustY(int idx)
         document = doc;
         controls = [[NSMutableArray alloc] init];
         adsrViews = [[NSMutableArray alloc] init];
-        
-   
 
         CGFloat totalwidth = 2*COLUMN_WIDTH;
         CGFloat y = frame.size.height - TOP_MARGIN - ROW_HEIGHT;
@@ -999,14 +998,14 @@ double adjustY(int idx)
 {
     gui_printf("Save the file!\n");
     int program= [programField intValue];
-    save_bitmap(document->bitmap, program);
+    save_bitmap(document->bitmap, program, model);
 }
 
 - (void)uploadProgram:(id)sender
 {
     gui_printf("Upload the program!\n");
     int program= [programField intValue];
-    if(send_bitmap(document->bitmap, program)) {
+    if(send_bitmap(document->bitmap, program, model)) {
         gui_printf("Could not send data.\n");
     } else {
         gui_printf("Jolly good!\n");

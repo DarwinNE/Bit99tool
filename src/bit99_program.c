@@ -255,7 +255,7 @@ void bit99_process_byte(int ch)
     }
 }
 
-int open_bitmap(int pp, char *fn)
+int open_bitmap(int pp, char *fn, int model)
 {
     char file_name_with_number[PATH_MAX];
     sprintf(file_name_with_number,"%s.%d",fn, pp);
@@ -264,11 +264,11 @@ int open_bitmap(int pp, char *fn)
         gui_printf("Open a 74-byte bitmap.\n");
         sysex_editor_open_bitmap(bitmap_p, dump_pointer,
             p_bit_desc74, order74, BIT99_SHOWN_PARAMETERS_SIZE_74, 
-            pp, file_name_with_number);
+            pp, file_name_with_number, model);
     } else if(bitmap_size==BITMAP_14) {
         sysex_editor_open_bitmap(bitmap_p, dump_pointer,
             p_bit_desc14, order14, BIT99_SHOWN_PARAMETERS_SIZE_14, 
-            pp, file_name_with_number);
+            pp, file_name_with_number, model);
     } else {
         gui_printf("The file does not contain a program.\n");
         return 1;
@@ -277,7 +277,7 @@ int open_bitmap(int pp, char *fn)
     return 0;
 }
 
-int bit99_sysex(const char *fname)
+int bit99_sysex(const char *fname, int model)
 {
     gui_printf("Processing file: %s\n", fname);
     bitmap_size = 0;
@@ -295,7 +295,7 @@ int bit99_sysex(const char *fname)
         ch = fgetc(fin);
         bit99_process_byte(ch);
         if(ch==SYSEX_END && bitmap_size!=0) {
-            open_bitmap(program_number, file_name);
+            open_bitmap(program_number, file_name, model);
             bitmap_size=0;
         }
     } while(ch != EOF);
@@ -675,6 +675,13 @@ void bit99_decode_program_bitmap74(void)
         "**************************************************************\n");
 }
 
+int calc_model_code(int model)
+{
+    // Bit 99 has code 0x20
+    // Bit 01 has code 0x10
+    return (model==0)?0x20:0x10;
+}
+
 /**
     Save the current bitmap.
     The size of the bitmap depends on the program number
@@ -682,12 +689,14 @@ void bit99_decode_program_bitmap74(void)
     76-99 -> 14 bytes Split/Double bitmap
 
 */
-int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program)
+int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program,
+    int model)
 {
+    int model_code=calc_model_code(model);
     unsigned char data[] = {
         0xF0,   // Sysex start
         0x25,   // Manifacturer ID (Crumar)
-        0x20,   // Device ID + channel (0x10 for the BIT 01)
+        model_code,   // Device ID + channel (0x10 for the BIT 01)
         0x07,   // Program dump
         0x20,   // Program number
     };
@@ -713,7 +722,7 @@ int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program)
     return 0;
 }
 
-int save_bitmap(unsigned char *bitmap, const int program)
+int save_bitmap(unsigned char *bitmap, const int program, int model)
 {
 /*
     FILE *fout = fopen(file_name, "wb");
@@ -723,13 +732,14 @@ int save_bitmap(unsigned char *bitmap, const int program)
     fclose(fout);
     return r;
     */
-    return save_bitmap_in_a_collection_file(file_name, bitmap, program);
+    return save_bitmap_in_a_collection_file(file_name, bitmap, program, model);
 }
 
 int save_bitmap_in_a_collection_file(
     const char *filename,
     unsigned char *bitmap,
-    const int program)
+    const int program,
+    const int model)
 {
     #define MAX_FILE_SIZE 20000
     unsigned char file_buffer[MAX_FILE_SIZE];
@@ -764,10 +774,11 @@ int save_bitmap_in_a_collection_file(
     } else {
         gui_printf("Created a new file.\n");
     }
+    int model_code = calc_model_code(model);
     for (i=0; i<pos; ++i) {
         if(i<pos-5 && file_buffer[i]==SYSEX_ST && 
             file_buffer[i+1]==CRUMAR_BIT &&
-            file_buffer[i+2]==0x20 &&
+            file_buffer[i+2]==model_code &&
             file_buffer[i+3]==PROG_DUMP &&
             file_buffer[i+4]==program-1)
         {
@@ -790,7 +801,7 @@ int save_bitmap_in_a_collection_file(
     if(i==pos) {
         file_buffer[i++]=SYSEX_ST;
         file_buffer[i++]=CRUMAR_BIT;
-        file_buffer[i++]=0x20;
+        file_buffer[i++]=model_code;
         file_buffer[i++]=PROG_DUMP;
         file_buffer[i++]=program-1;
 

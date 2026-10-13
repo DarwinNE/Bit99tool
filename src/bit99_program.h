@@ -100,11 +100,13 @@ int bit99_encode_parameter(const bit_map *p_bit_desc,
                         int index,
                         const Bit99ParameterValue *value);
 
-int bit99_sysex(const char *fname);
+int bit99_sysex(const char *fname, int model);
 void bit99_decode_program_bitmap74(void);
 void bit99_decode_split_double_bitmap(void);
-int save_bitmap(unsigned char *bitmap, const int program);
-int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program);
+int save_bitmap(unsigned char *bitmap, const int program, int model);
+int save_bitmap_f(FILE *fout, unsigned char *bitmap, const int program,
+    int model);
 int save_bitmap_in_a_collection_file(const char *filename,
-    unsigned char *bitmap, const int program);
+    unsigned char *bitmap, const int program,
+    int model);
 #endif

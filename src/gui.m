@@ -7,6 +7,8 @@
 #include "gui.h"
 #include "macos_midi.h"
 #include "bit99_handler.h"
+#include "sysex_window.h"
+
 
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
@@ -173,10 +175,14 @@
             initWithFrame:NSMakeRect(100, 585, 260, 28)
             pullsDown:NO];
 
+
     [modelPopup addItemWithTitle:@"Crumar Bit 99"];
     [modelPopup addItemWithTitle:@"Crumar Bit 01"];
 
     [modelPopup selectItemAtIndex:0];
+
+    [modelPopup setTarget:self];
+    [modelPopup setAction:@selector(modelPopupChanged:)];
 
     [content addSubview:modelPopup];
 
@@ -420,6 +426,16 @@
 }
 
 /*
+ * The model is changed!
+ */
+- (void)modelPopupChanged:(NSPopUpButton *)sender
+{
+    NSInteger model = [sender indexOfSelectedItem];
+
+    sysex_editor_set_model((int)model);
+}
+
+/*
  * Clear log pressing the "Clear" button (you guessed it!)
  */
 
@@ -467,15 +483,17 @@
 {
     [self updateConfig];
     int programNumber = [programField intValue];
+    int model = [modelPopup indexOfSelectedItem];
 
-    bit99_receive_program_h(&config, programNumber);
+    bit99_receive_program_h(&config, programNumber, model);
 }
 
 - (void)receiveAll:(id)sender
 {
     [self updateConfig];
-
-    bit99_receive_all_h(&config);
+    int model = [modelPopup indexOfSelectedItem];
+    
+    bit99_receive_all_h(&config, model);
 }
 
 - (void)sendFile:(id)sender
@@ -526,8 +544,9 @@
                       encoding:NSUTF8StringEncoding])
         return;
 
+    int model = [modelPopup indexOfSelectedItem];
 
-    bit99_interpret_file_h(buffer);
+    bit99_interpret_file_h(buffer, model);
 }
 
 

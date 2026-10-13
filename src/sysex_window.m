@@ -10,6 +10,9 @@
 #include "sysex_document.h"
 #include "sysex_program_view.h"
 #include "dimensions.h"
+#include "gui.h"
+
+int model;
 
 @interface SysexEditorWindowController :
     NSWindowController <NSTabViewDelegate, NSWindowDelegate>
@@ -19,13 +22,14 @@
     NSScrollView *tabScrollView;
     NSTextField *leftIndicator;
     NSTextField *rightIndicator;
+    //NSInteger model;
 
     SysexDocument *documents[SYSEX_MAX_DOCUMENTS];
     int documentCount;
 }
 
 - (void)addDocument:(SysexDocument *)document;
-
+- (void)setModel:(NSInteger)model;
 - (void)programNumberDidChange:(NSNotification *)notification;
 
 @end
@@ -41,6 +45,12 @@ static SysexEditorWindowController *editorController = nil;
  */
 
 @implementation SysexEditorWindowController
+
+- (void)setModel:(NSInteger)newModel
+{
+    model = newModel;
+    gui_printf("Current model: %d\n", model);
+}
 
 - (id)init
 {
@@ -637,13 +647,15 @@ void sysex_editor_open_bitmap(const unsigned char *bitmap,
                               int *order,
                               const int number_of_elements, 
                               const int programNumber,
-                              const char *filename)
+                              const char *filename,
+                              int model)
 {
     if(editorController == nil) {
         editorController =
             [[SysexEditorWindowController alloc] init];
     }
 
+    [editorController setModel:model];
     SysexDocument *document = [[SysexDocument alloc] init];
 
     memcpy(document->bitmap, bitmap, size);
@@ -662,4 +674,12 @@ void sysex_editor_open_bitmap(const unsigned char *bitmap,
     [editorController addDocument:document];
     [editorController showWindow:nil];
     [editorController.window makeKeyAndOrderFront:nil];
+}
+
+void sysex_editor_set_model(int newModel)
+{
+    if (editorController == nil)
+        return;
+
+    [editorController setModel:newModel];
 }

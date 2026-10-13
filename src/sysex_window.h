@@ -13,7 +13,9 @@ void sysex_editor_open_bitmap(const unsigned char *bitmap,
                               int *order,
                               const int number_of_elements, 
                               const int programNumber,
-                              const char *filename);
+                              const char *filename,
+                              int model);
 void sysex_select_last_added_tab(void);
+void sysex_editor_set_model(int model);
 
 #endif

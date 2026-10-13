@@ -49,7 +49,7 @@ int check_file_name(BitConfig *config, int pr)
     return 0;
 }
 
-void bit99_receive_program_h(BitConfig *config, int pr)
+void bit99_receive_program_h(BitConfig *config, int pr, int model)
 {
     int problems=0;
     gui_printf_bold("Receive single program\n");
@@ -75,14 +75,14 @@ void bit99_receive_program_h(BitConfig *config, int pr)
         fout=NULL;
         bit99_set_output_file(NULL);
         if (problems==0 && config->interpret)
-            bit99_sysex(config->full_file_name);
+            bit99_sysex(config->full_file_name, model);
     } else {
         gui_printf("Invalid file name, abort\n");
     }
     if (problems==0) gui_printf("Done\n\n");
 }
 
-void bit99_receive_all_h(BitConfig *config)
+void bit99_receive_all_h(BitConfig *config, int model)
 {
     int problems=0;
 
@@ -93,17 +93,17 @@ void bit99_receive_all_h(BitConfig *config)
         fout=NULL;
         bit99_set_output_file(NULL);
         if (problems==0 && config->interpret)
-            bit99_sysex(config->full_file_name);
+            bit99_sysex(config->full_file_name, model);
     } else {
         gui_printf("Invalid base file name, abort.\n");
     }
     if (problems==0) gui_printf("Done\n\n");
 }
 
-void bit99_interpret_file_h(const char *filename)
+void bit99_interpret_file_h(const char *filename, int model)
 {
     gui_printf_bold("Interpret file: %s\n", filename);
-    bit99_sysex(filename);
+    bit99_sysex(filename, model);
 }
 
 void bit99_send_file_h(const char *filename)
