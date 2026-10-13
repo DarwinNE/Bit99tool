@@ -52,6 +52,23 @@ static SysexEditorWindowController *editorController = nil;
     gui_printf("Current model: %d\n", model);
 }
 
+- (void)resizeWindowForProgram:(int)programNumber
+{
+    NSWindow *window = self.window;
+
+    CGFloat height =
+        (programNumber <= 75) ? 1050.0 : 550.0;
+
+    NSRect frame = [window frame];
+    CGFloat delta = frame.size.height - height;
+
+    frame.origin.y += delta;
+    frame.size.height = height;
+
+    [window setMaxSize:NSMakeSize(1250.0, height)];
+    [window setFrame:frame display:YES animate:YES];
+}
+
 - (id)init
 {
     NSRect frame =
@@ -580,6 +597,10 @@ static SysexEditorWindowController *editorController = nil;
         (SysexTabButton *)view;
     //gui_printf("select tab \n");
     [tabView selectTabViewItem:button.tabItem];
+    
+    SysexDocument *document = button.tabItem.identifier;
+    int programNumber = document->programNumber;
+    [self resizeWindowForProgram:programNumber];
 }
 
 - (void)closeTabButton:(id)sender
@@ -629,6 +650,7 @@ static SysexEditorWindowController *editorController = nil;
         documents[documentCount - 1];
 
     [self selectDocument:document];
+    [self resizeWindowForProgram:document->programNumber];
 }
 
 @end

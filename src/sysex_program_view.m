@@ -16,7 +16,7 @@ extern char *lfo_wave[];
 extern char *key[];
 extern char *keyboard[];
 
-extern char file_name[PATH_MAX];
+extern char file_name[PATH_MAX]; // bleah!
 extern int model;   // bleah!
 
 /*

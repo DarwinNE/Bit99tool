@@ -16,7 +16,7 @@
                                     // i.e. number of shown interface elements.
     BOOL modified;                  // Flag: has it been modified or not.
     NSString *filename;             // Current filename.
-    int programNumber;
+    int programNumber;              // Program number 1 to 99.
 }
 @end
 
