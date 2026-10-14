@@ -2,7 +2,7 @@
 #define DIMENSIONS_H
 
 
-#define ROW_HEIGHT          28.0
+#define ROW_HEIGHT          24.0
 #define LABEL_WIDTH         200.0
 #define CONTROL_WIDTH       150.0
 #define NUMBER_WIDTH        60.0
@@ -13,8 +13,9 @@
 #define TOP_MARGIN          20.0
 #define SEPARATION          10.0
 #define COLUMN_WIDTH        600.0
+#define ELEMENT_HEIGHT      18.0
 
-#define NROW 21
+#define NROW 20
 
 
 #endif

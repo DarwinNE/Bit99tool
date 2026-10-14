@@ -57,7 +57,7 @@ static SysexEditorWindowController *editorController = nil;
     NSWindow *window = self.window;
 
     CGFloat height =
-        (programNumber <= 75) ? 1050.0 : 550.0;
+        (programNumber <= 75) ? 860.0 : 420.0;
 
     NSRect frame = [window frame];
     CGFloat delta = frame.size.height - height;

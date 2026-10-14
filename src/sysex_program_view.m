@@ -98,7 +98,7 @@ static NSTextField *createLabel(NSString *text, NSRect frame)
 
 static void setupDSEG7Popup(NSPopUpButton *popup)
 {
-
+    [popup setControlSize:NSControlSizeSmall];
     //CGFloat size = [[popup font] pointSize];
 
     //NSFont *font = [NSFont fontWithName:@"DSEG7 Classic" size:size];
@@ -133,7 +133,7 @@ static void setupDSEG7Popup(NSPopUpButton *popup)
 
 static void setupDSEG7Field(NSTextField *field)
 {
-    CGFloat size = [[field font] pointSize]*1.4;
+    CGFloat size = [[field font] pointSize]*1.3;
 
     [field setFont:[NSFont fontWithName:@"DSEG7 Classic" size:size]];
     [field setTextColor:[NSColor redColor]];
@@ -263,7 +263,7 @@ double adjustY(int idx)
                         NSMakeRect(LEFT_MARGIN+PADDING,
                                    y,
                                    LABEL_WIDTH,
-                                   22));
+                                   ELEMENT_HEIGHT));
         [self addSubview:fileNameLabel];
 
         fileNameField =
@@ -274,7 +274,7 @@ double adjustY(int idx)
                         y,
                         totalwidth-
                             (LEFT_MARGIN + PADDING+LABEL_WIDTH+BROWSE_WIDTH+10),
-                        22)];
+                        ELEMENT_HEIGHT)];
 
         [fileNameField setStringValue:[NSString
             stringWithUTF8String:file_name]];
@@ -302,7 +302,7 @@ double adjustY(int idx)
                         totalwidth - BROWSE_WIDTH,
                         y,
                         BROWSE_WIDTH,
-                        22)];
+                        ELEMENT_HEIGHT)];
 
         [browseButton setTitle:@"Browse..."];
         [browseButton setButtonType:NSButtonTypeMomentaryPushIn];
@@ -319,7 +319,7 @@ double adjustY(int idx)
                         NSMakeRect(LEFT_MARGIN+PADDING,
                                    y,
                                    LABEL_WIDTH,
-                                   22));
+                                   ELEMENT_HEIGHT));
         [self addSubview:programLabel];
 
         programField =
@@ -329,7 +329,7 @@ double adjustY(int idx)
                         LEFT_MARGIN + PADDING + LABEL_WIDTH,
                         y,
                         NUMBER_WIDTH,
-                        22)];
+                        ELEMENT_HEIGHT)];
 
 
         NSNumberFormatter *formatter_p = [[NSNumberFormatter alloc] init];
@@ -403,7 +403,7 @@ double adjustY(int idx)
                             NSMakeRect(calcX(k)+LEFT_MARGIN+PADDING,
                                        y,
                                        LABEL_WIDTH,
-                                       22));
+                                       ELEMENT_HEIGHT));
 
             [self addSubview:label];
 
@@ -419,7 +419,7 @@ double adjustY(int idx)
                         NSMakeRect(calcX(k)+LEFT_MARGIN,
                                    y,
                                    PARAM_WIDTH,
-                                   22));
+                                   ELEMENT_HEIGHT));
                 setupDSEG7Field(number);
                 NSColor *darkRed =
                     [NSColor.redColor colorWithAlphaComponent:0.5];
@@ -445,7 +445,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN + PADDING + LABEL_WIDTH,
                                 y,
                                 NUMBER_WIDTH,
-                                22)];
+                                ELEMENT_HEIGHT)];
 
                 NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
                 [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
@@ -489,7 +489,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN + PADDING + LABEL_WIDTH,
                                 y,
                                 CONTROL_WIDTH/2-SEPARATION/2,
-                                22)];
+                                0.9*ELEMENT_HEIGHT)];
                 setupDSEG7Popup(popup1);
                 NSPopUpButton *popup2 =
                     [[NSPopUpButton alloc]
@@ -500,7 +500,7 @@ double adjustY(int idx)
                                 SEPARATION,
                                 y,
                                 CONTROL_WIDTH/2-SEPARATION/2,
-                                22)];
+                                0.9*ELEMENT_HEIGHT)];
                 setupDSEG7Popup(popup2);
 
 
@@ -583,7 +583,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN+PARAM_WIDTH,
                                 y - lfo * ROW_HEIGHT,
                                 LABEL_WIDTH,
-                                22));
+                                ELEMENT_HEIGHT));
 
                     [self addSubview:label];
                     gui_printf("index= %d value.value=%d\n", i, value.value);
@@ -599,7 +599,7 @@ double adjustY(int idx)
                                             j * 75,
                                         y - lfo * ROW_HEIGHT,
                                         70,
-                                        22)];
+                                        ELEMENT_HEIGHT)];
 
                         [check setButtonType:NSButtonTypeSwitch];
                         [check setTitle:
@@ -656,7 +656,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN+PARAM_WIDTH,
                                 y - lfo * ROW_HEIGHT,
                                 LABEL_WIDTH,
-                                22));
+                                ELEMENT_HEIGHT));
 
                     [self addSubview:label];
 
@@ -667,7 +667,7 @@ double adjustY(int idx)
                                     LEFT_MARGIN + LABEL_WIDTH,
                                     y - lfo * ROW_HEIGHT,
                                     LABEL_WIDTH,
-                                    22)];
+                                    0.9*ELEMENT_HEIGHT)];
 
                     setupDSEG7Popup(popup);
 
@@ -706,7 +706,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN+LABEL_WIDTH,
                                 y - 2 * ROW_HEIGHT,
                                 CONTROL_WIDTH,
-                                22)];
+                                ELEMENT_HEIGHT)];
 
                 [check setButtonType:NSButtonTypeSwitch];
                 [check setTitle:@"VCF invert"];
@@ -762,7 +762,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN+PARAM_WIDTH,
                                 y - dco * ROW_HEIGHT,
                                 LABEL_WIDTH,
-                                22));
+                                ELEMENT_HEIGHT));
 
                     [self addSubview:label];
 
@@ -776,7 +776,7 @@ double adjustY(int idx)
                                             j * 85,
                                         y - dco * ROW_HEIGHT,
                                         80,
-                                        22)];
+                                        ELEMENT_HEIGHT)];
 
                         [check setButtonType:NSButtonTypeSwitch];
                         [check setTitle:
@@ -815,7 +815,7 @@ double adjustY(int idx)
                 ADSRView *adsr = [[ADSRView alloc]
                     initWithFrame:NSMakeRect(calcX(k)+
                         LEFT_MARGIN + PADDING + LABEL_WIDTH+CONTROL_WIDTH,
-                        y, 150, 150)];
+                        y, 150, ROW_HEIGHT*5)];
                 [self addSubview:adsr];
 
                 [adsr setDocument:document
@@ -846,7 +846,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN + LABEL_WIDTH + PADDING,
                                 y,
                                 CONTROL_WIDTH,
-                                22)];
+                                0.9*ELEMENT_HEIGHT)];
     
                 setupDSEG7Popup(popup);
                 [popup addItemWithTitle: @"Split"];
@@ -884,7 +884,7 @@ double adjustY(int idx)
                                 LEFT_MARGIN + LABEL_WIDTH + PADDING,
                                 y,
                                 CONTROL_WIDTH,
-                                22)];
+                                0.9*ELEMENT_HEIGHT)];
                 setupDSEG7Popup(popup);
     
                 for(int keyboardIndex=0; keyboardIndex<KEYBOARD_SIZE;
@@ -946,13 +946,13 @@ double adjustY(int idx)
         [uploadButton setAction:@selector(uploadProgram:)];
 
         [self addSubview:uploadButton];
-        y -= 2*ROW_HEIGHT;
+        y -= ROW_HEIGHT;
 
         NSBox *separator = [[NSBox alloc]
             initWithFrame:NSMakeRect(calcX(document->number_of_elements)+
                 0, y+ROW_HEIGHT/2, COLUMN_WIDTH, 1)];
         [separator setBoxType:NSBoxSeparator];
-        [self addSubview:separator];
+        //[self addSubview:separator];
 
         NSBox *vert_separator =
             [[NSBox alloc]
@@ -966,16 +966,17 @@ double adjustY(int idx)
         [vert_separator setTransparent:YES];
         [vert_separator setFillColor:[NSColor separatorColor]];
 
-        // Add the vertical separator only if needed (i.e. we are using two
-        // columns).
-        if(document->number_of_elements>NROW)
-            [self addSubview:vert_separator];
-        
 
         if (y<min_y)
             min_y=y;
-
-        min_y -= ROW_HEIGHT;
+        // Add the vertical separator only if needed (i.e. we are using two
+        // columns).
+        if(document->number_of_elements>NROW) {
+            [self addSubview:vert_separator];
+            min_y += 0.5*ROW_HEIGHT;
+        } else {
+            min_y -= 0.5*ROW_HEIGHT;
+        }
 
         CGFloat contentHeight = frame.size.height - min_y;
         CGFloat dy = contentHeight - frame.size.height;
