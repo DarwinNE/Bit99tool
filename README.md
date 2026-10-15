@@ -6,6 +6,17 @@ Bit99Tool provides tools for working with Bit 99 SysEx data and MIDI, including 
 
 The project is written in **C and Objective-C** using native macOS Cocoa and CoreMIDI APIs. It has no external runtime dependencies.
 
+## Support Bit99Tool
+
+If you find Bit99Tool useful and would like to support its development, you can make a small donation via PayPal.
+
+[**☕ Buy me a coffee via PayPal**](https://paypal.me/davidebucci1442)
+
+Donations are entirely optional, but always appreciated. Bit99Tool is free and open source, and will remain so.
+
+Thank you for your support!
+
+
 <p align="center">
   <img src="screenshots/screenshot_icon.png" width="240">
 </p>
@@ -102,10 +113,9 @@ The DSEG7 Classic font is distributed under its own license. See `res/LICENSE_ds
 
 ## Status
 
-Bit99Tool is an ongoing personal project developed for working with the Crumar Bit 99.
+Bit99Tool is a free, open-source utility for the Crumar Bit 99 and compatible workflows.
 
-The application is functional, but the interface and feature set may continue to evolve.
-
+Version 1.0 provides a functional MIDI utility and graphical SysEx program editor. Further improvements may be made over time.
 ---
 
 *Built for the Bit 99.*

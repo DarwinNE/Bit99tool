@@ -344,7 +344,7 @@
         [[NSButton alloc]
             initWithFrame:NSMakeRect(300, 75, 250, 30)];
 
-    [interpretButton setTitle:@"Interpret a file..."];
+    [interpretButton setTitle:@"Open in Editor"];
     [interpretButton setBezelStyle:NSBezelStyleRounded];
     [interpretButton setTarget:self];
     [interpretButton setAction:@selector(interpretFile:)];
@@ -413,6 +413,18 @@
 
     [appMenuItem setSubmenu:appMenu];
 
+    NSMenu *helpMenu = [[NSMenu alloc] initWithTitle:@"Help"];    
+    NSMenuItem *userManualItem = [[NSMenuItem alloc] 
+        initWithTitle:@"User Manual"
+        action:@selector(openUserManual:)
+        keyEquivalent:@""];
+    [helpMenu addItem:userManualItem];
+    
+    NSMenuItem *helpMenuItem = [[NSMenuItem alloc]
+        initWithTitle:@"Help" action:nil keyEquivalent:@""];
+
+    [helpMenuItem setSubmenu:helpMenu];
+    [mainMenu addItem:helpMenuItem];
     [NSApp setMainMenu:mainMenu];
 
     [self loadSettings];
@@ -423,6 +435,20 @@
 
     [window makeKeyAndOrderFront:nil];
     [NSApp activateIgnoringOtherApps:YES];
+}
+
+- (void)openUserManual:(id)sender
+{
+    NSString *manualPath = [[NSBundle mainBundle]
+        pathForResource:@"user_manual" ofType:@"pdf"];
+    if (manualPath) {
+        NSURL *manualURL = [NSURL fileURLWithPath:manualPath];
+        [[NSWorkspace sharedWorkspace] openURL:manualURL];
+    } else {
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setMessageText:@"User Manual not found."];
+        [alert runModal];
+    }
 }
 
 /*

@@ -13,7 +13,8 @@ RESOURCE_DIR = $(APP)/Contents/Resources
 RESOURCES = res/bit_logo.png \
     res/dseg7-classic-latin-300-normal.ttf \
     res/LICENSE_dseg7 \
-    res/app_icon.icns
+    res/app_icon.icns \
+    res/user_manual.pdf
 
 
 C_SOURCES = \
@@ -66,6 +67,7 @@ $(BINARY): $(OBJECTS) Info.plist $(RESOURCES)
 	@cp res/dseg7-classic-latin-300-normal.ttf $(RESOURCE_DIR)/
 	@cp res/LICENSE_dseg7 $(RESOURCE_DIR)/
 	@cp res/app_icon.icns $(RESOURCE_DIR)/
+	@cp res/user_manual.pdf $(RESOURCE_DIR)/
 
 	$(CC) $(OBJECTS) -o $(BINARY) $(LDFLAGS)
 
