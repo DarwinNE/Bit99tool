@@ -12,7 +12,7 @@ Please note that antivirus scans cannot guarantee that software is safe. Only re
 
 No Apple Developer Program membership is required to download or use Bit99Tool.
 
-To run it, move `Bit99Tools.app` to `/Applications`, then open Terminal and run:
+To run it, move `Bit99Tool.app` to `/Applications`, then open Terminal and run:
 
 xattr -c /Applications/Bit99Tool.app
 
