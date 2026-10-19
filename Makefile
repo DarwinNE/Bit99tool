@@ -1,13 +1,18 @@
+
 CC = clang
 
 CFLAGS = -Wall -Wextra -O2
 
 OBJCFLAGS = $(CFLAGS) -fobjc-arc
 
-LDFLAGS = -framework Cocoa -framework CoreMIDI 
+LDFLAGS = -framework Cocoa -framework CoreMIDI
 
 APP = Bit99Tool.app
 BINARY = $(APP)/Contents/MacOS/Bit99Tool
+
+VERSION = 1.0
+DMG_NAME = Bit99Tool-$(VERSION).dmg
+DMG_STAGING = build/dmg-staging
 
 RESOURCE_DIR = $(APP)/Contents/Resources
 RESOURCES = res/bit_logo.png \
@@ -18,36 +23,35 @@ RESOURCES = res/bit_logo.png \
 
 
 C_SOURCES = \
-	src/bit99_handler.c
+    src/bit99_handler.c
 
 OBJC_SOURCES = \
-	src/main.m \
-	src/gui.m \
-	src/sysex_window.m \
-	src/sysex_tab_button.m \
-	src/ADSRview.m \
-	src/sysex_document.m \
-	src/sysex_program_view.m \
-	src/sysex_parameters.m \
-	src/bit99_text_field.m
+    src/main.m \
+    src/gui.m \
+    src/sysex_window.m \
+    src/sysex_tab_button.m \
+    src/ADSRview.m \
+    src/sysex_document.m \
+    src/sysex_program_view.m \
+    src/sysex_parameters.m \
+    src/bit99_text_field.m
 
 C_OBJECTS = \
-	src/bit99_handler.o \
-	src/bit99_midi.o \
-	src/macos_midi.o \
-	src/bit99_program.o \
+    src/bit99_handler.o \
+    src/bit99_midi.o \
+    src/macos_midi.o \
+    src/bit99_program.o
 
 OBJC_OBJECTS = \
-	src/main.o \
-	src/gui.o \
-	src/sysex_window.o \
-	src/sysex_tab_button.o \
-	src/ADSRview.o \
-	src/sysex_document.o \
-	src/sysex_program_view.o \
-	src/sysex_parameters.o \
-	src/bit99_text_field.o
-
+    src/main.o \
+    src/gui.o \
+    src/sysex_window.o \
+    src/sysex_tab_button.o \
+    src/ADSRview.o \
+    src/sysex_document.o \
+    src/sysex_program_view.o \
+    src/sysex_parameters.o \
+    src/bit99_text_field.o
 
 OBJECTS = $(C_OBJECTS) $(OBJC_OBJECTS)
 
@@ -58,17 +62,12 @@ all: $(APP)
 $(APP): $(BINARY)
 	@echo "Built $(APP)"
 
-	
+
 $(BINARY): $(OBJECTS) Info.plist $(RESOURCES)
 	@mkdir -p $(APP)/Contents/MacOS
 	@mkdir -p $(RESOURCE_DIR)
 	@cp Info.plist $(APP)/Contents/Info.plist
-	@cp res/bit_logo.png $(RESOURCE_DIR)/
-	@cp res/dseg7-classic-latin-300-normal.ttf $(RESOURCE_DIR)/
-	@cp res/LICENSE_dseg7 $(RESOURCE_DIR)/
-	@cp res/app_icon.icns $(RESOURCE_DIR)/
-	@cp res/user_manual.pdf $(RESOURCE_DIR)/
-
+	@cp $(RESOURCES) $(RESOURCE_DIR)/
 	$(CC) $(OBJECTS) -o $(BINARY) $(LDFLAGS)
 
 
@@ -109,14 +108,34 @@ src/bit99_text_field.o: src/bit99_text_field.m src/bit99_text_field.h
 	$(CC) $(OBJCFLAGS) -c src/bit99_text_field.m -o src/bit99_text_field.o
 
 
+# Create a distributable disk image
+dmg: $(DMG_NAME)
+
+
+$(DMG_NAME): $(APP)
+	@echo "Preparing DMG contents..."
+	rm -rf "$(DMG_STAGING)"
+	mkdir -p "$(DMG_STAGING)"
+	cp -R "$(APP)" "$(DMG_STAGING)/"
+	ln -s /Applications "$(DMG_STAGING)/Applications"
+	cp -R  Important_note.txt "$(DMG_STAGING)/"
+	@echo "Creating $(DMG_NAME)..."
+	hdiutil create \
+	    -volname "Bit99Tool $(VERSION)" \
+	    -srcfolder "$(DMG_STAGING)" \
+	    -ov \
+	    -format UDZO \
+	    "$@"
+	rm -rf "$(DMG_STAGING)"
+	@echo "Created $(DMG_NAME)"
+
 
 run: $(APP)
 	open $(APP)
 
 
 clean:
-	rm -rf $(OBJECTS) $(APP)
+	rm -rf $(OBJECTS) $(APP) "$(DMG_NAME)" "$(DMG_STAGING)"
 
 
-.PHONY: all run clean
-
+.PHONY: all run clean dmg

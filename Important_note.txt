@@ -1,0 +1,19 @@
+            macOS security notice
+
+Bit99Tool is distributed as free, open-source software under the GPL v3 license. The application is currently unsigned and may be blocked by macOS Gatekeeper.
+You may obtain a message "This app is damaged" or similar. This message is
+incorrect.
+
+You can download the application and inspect the source code from the official GitHub repository: https://github.com/DarwinNE/Bit99tool
+
+If you wish, you can also scan the downloaded application with an antivirus before running it.
+
+Please note that antivirus scans cannot guarantee that software is safe. Only remove macOS quarantine restrictions if you trust the source of the download.
+
+No Apple Developer Program membership is required to download or use Bit99Tool.
+
+To run it, move `Bit99Tools.app` to `/Applications`, then open Terminal and run:
+
+xattr -c /Applications/Bit99Tool.app
+
+This removes the quarantine attribute from the downloaded application. Only do this if you trust the source of the download.
